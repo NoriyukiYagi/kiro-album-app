@@ -70,9 +70,9 @@ graph TB
         end
         
         subgraph "Production Volumes"
-            F[/data/pict/<br/>Original Files<br/>Backup Enabled]
-            G[/data/thumb/<br/>Thumbnails<br/>Backup Enabled]
-            L[/data/db/<br/>Database Data]
+            F["/data/pict/<br/>Original Files<br/>Backup Enabled"]
+            G["/data/thumb/<br/>Thumbnails<br/>Backup Enabled"]
+            L["/data/db/<br/>Database Data"]
         end
     end
     
