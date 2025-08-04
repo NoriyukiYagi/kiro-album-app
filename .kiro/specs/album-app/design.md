@@ -26,8 +26,8 @@ graph TB
         end
         
         subgraph "Persistent Volumes"
-            F[/data/pict/<br/>Original Files]
-            G[/data/thumb/<br/>Thumbnails]
+            F["/data/pict/<br/>Original Files"]
+            G["/data/thumb/<br/>Thumbnails"]
         end
     end
     
