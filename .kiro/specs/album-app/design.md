@@ -18,9 +18,7 @@ graph TB
         end
         
         subgraph "Backend Container (Dev)"
-            B[ASP.NET Core API<br/>Port: 5000<br/>Development Mode]
-            C[File Storage Service]
-            D[Thumbnail Service]
+            B[ASP.NET Core API<br/>Port: 5000<br/>Development Mode<br/>+ File Storage Service<br/>+ Thumbnail Service]
         end
         
         subgraph "Database Container (Dev)"
@@ -40,8 +38,6 @@ graph TB
     B --> E
     B --> F
     B --> G
-    C --> F
-    D --> G
     H --> A
     H --> B
 ```
@@ -60,9 +56,7 @@ graph TB
         end
         
         subgraph "Backend Container (Prod)"
-            B[ASP.NET Core API<br/>Port: 5000<br/>Production Mode]
-            C[File Storage Service]
-            D[Thumbnail Service]
+            B[ASP.NET Core API<br/>Port: 5000<br/>Production Mode<br/>+ File Storage Service<br/>+ Thumbnail Service]
         end
         
         subgraph "Database Container (Prod)"
@@ -84,8 +78,6 @@ graph TB
     B --> E
     B --> F
     B --> G
-    C --> F
-    D --> G
     E --> L
 ```
 
