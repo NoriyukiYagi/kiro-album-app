@@ -8,36 +8,85 @@ Angular フロントエンドと ASP.NET Core バックエンドによる写真�
 
 ### システム構成
 
+#### 開発環境構成
+
 ```mermaid
 graph TB
-    subgraph "Docker Environment"
-        subgraph "Frontend Container"
-            A[Angular App<br/>Port: 4200]
+    subgraph "Development Docker Environment"
+        subgraph "Frontend Container (Dev)"
+            A[Angular Dev Server<br/>Port: 4200<br/>Hot Reload]
         end
         
-        subgraph "Backend Container"
-            B[ASP.NET Core API<br/>Port: 5000]
+        subgraph "Backend Container (Dev)"
+            B[ASP.NET Core API<br/>Port: 5000<br/>Development Mode]
             C[File Storage Service]
             D[Thumbnail Service]
         end
         
-        subgraph "Database Container"
-            E[PostgreSQL<br/>Port: 5432]
+        subgraph "Database Container (Dev)"
+            E[PostgreSQL<br/>Port: 5432<br/>Development DB]
         end
         
-        subgraph "Persistent Volumes"
-            F["/data/pict/<br/>Original Files"]
-            G["/data/thumb/<br/>Thumbnails"]
+        subgraph "Development Volumes"
+            F[./data/pict/<br/>Original Files]
+            G[./data/thumb/<br/>Thumbnails]
+            H[./src/<br/>Source Code Mount]
         end
     end
     
-    H[Google OAuth] --> A
+    I[Developer Browser] --> A
+    J[Google OAuth<br/>Dev Credentials] --> A
     A --> B
     B --> E
     B --> F
     B --> G
     C --> F
     D --> G
+    H --> A
+    H --> B
+```
+
+#### 本番環境構成
+
+```mermaid
+graph TB
+    subgraph "Production Docker Environment"
+        subgraph "Reverse Proxy"
+            K[Nginx<br/>Port: 80/443<br/>SSL Termination]
+        end
+        
+        subgraph "Frontend Container (Prod)"
+            A[Angular App<br/>Production Build<br/>Served by Nginx]
+        end
+        
+        subgraph "Backend Container (Prod)"
+            B[ASP.NET Core API<br/>Port: 5000<br/>Production Mode]
+            C[File Storage Service]
+            D[Thumbnail Service]
+        end
+        
+        subgraph "Database Container (Prod)"
+            E[PostgreSQL<br/>Port: 5432<br/>Production DB<br/>Backup Enabled]
+        end
+        
+        subgraph "Production Volumes"
+            F[/data/pict/<br/>Original Files<br/>Backup Enabled]
+            G[/data/thumb/<br/>Thumbnails<br/>Backup Enabled]
+            L[/data/db/<br/>Database Data]
+        end
+    end
+    
+    M[Internet Users] --> K
+    N[Google OAuth<br/>Production Credentials] --> K
+    K --> A
+    K --> B
+    A --> B
+    B --> E
+    B --> F
+    B --> G
+    C --> F
+    D --> G
+    E --> L
 ```
 
 ### 技術スタック
