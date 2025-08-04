@@ -1,0 +1,68 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Build outputs
+dist/
+*/dist/
+out/
+*/out/
+build/
+*/build/
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.cache
+*.docstates
+*.dll
+*.pdb
+*.exe
+*.log
+
+# Angular
+.angular/
+*/angular/
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.development
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker
+.dockerignore
+
+# Data directories (keep structure but ignore content)
+data/pict/*
+!data/pict/.gitkeep
+data/thumb/*
+!data/thumb/.gitkeep
+
+# Backups
+backups/*
+!backups/.gitkeep
+
+# SSL certificates
+ssl/*
+!ssl/.gitkeep
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

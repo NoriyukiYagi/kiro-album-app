@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15
+    container_name: album-app-postgres
+    environment:
+      POSTGRES_DB: albumapp
+      POSTGRES_USER: albumuser
+      POSTGRES_PASSWORD: albumpass
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backups:/backups
+    networks:
+      - album-network
+    restart: unless-stopped
+
+  # ASP.NET Core Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: album-app-backend
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=albumapp;Username=albumuser;Password=albumpass
+    volumes:
+      - ./data/pict:/data/pict
+      - ./data/thumb:/data/thumb
+    depends_on:
+      - postgres
+    networks:
+      - album-network
+    restart: unless-stopped
+
+  # Nginx Reverse Proxy
+  nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    container_name: album-app-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./ssl:/etc/nginx/ssl
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - album-network
+    restart: unless-stopped
+
+  # Angular Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: album-app-frontend
+    networks:
+      - album-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  album-network:
+    driver: bridge
