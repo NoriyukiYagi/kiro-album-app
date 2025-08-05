@@ -181,3 +181,66 @@ docker-compose -f docker-compose.dev.yml ps postgres
 # ログの確認
 docker-compose -f docker-compose.dev.yml logs postgres
 ```
+
+## PostgreSQL接続情報
+
+### 接続パラメータ
+
+- **ホスト**: localhost
+- **ポート**: 5432
+- **データベース**: albumapp
+- **ユーザー**: albumuser
+- **パスワード**: albumpass
+
+### WindowsからPostgreSQLに接続する方法
+
+#### psqlクライアントを使用する場合
+
+```bash
+# PostgreSQLクライアントがインストールされている場合
+psql -h localhost -p 5432 -U albumuser -d albumapp
+```
+
+#### Podmanコンテナ経由で接続する場合
+
+```bash
+# コンテナ内のpsqlを使用
+podman exec -it album-app-postgres-dev psql -U albumuser -d albumapp
+
+# SQLクエリを直接実行
+podman exec album-app-postgres-dev psql -U albumuser -d albumapp -c "SELECT version();"
+```
+
+#### 接続テスト
+
+```powershell
+# TCP接続テスト
+Test-NetConnection -ComputerName localhost -Port 5432
+
+# データベース接続テスト
+podman exec album-app-postgres-dev psql -U albumuser -d albumapp -c "SELECT 'Connection Success' as status, current_timestamp;"
+```
+
+### データベース管理
+
+#### データベース一覧表示
+
+```bash
+podman exec album-app-postgres-dev psql -U albumuser -d albumapp -c "\l"
+```
+
+#### テーブル一覧表示
+
+```bash
+podman exec album-app-postgres-dev psql -U albumuser -d albumapp -c "\dt"
+```
+
+#### データベースバックアップ
+
+```bash
+# バックアップ作成
+podman exec album-app-postgres-dev pg_dump -U albumuser albumapp > ./backups/albumapp_backup_$(date +%Y%m%d_%H%M%S).sql
+
+# バックアップ復元
+podman exec -i album-app-postgres-dev psql -U albumuser -d albumapp < ./backups/albumapp_backup.sql
+```
