@@ -19,12 +19,39 @@ Angular フロントエンドと ASP.NET Core バックエンドを使用した�
 
 ### 開発環境の起動
 
+#### Docker Composeを使用する場合
+
 ```bash
 # 開発環境の起動
 docker-compose -f docker-compose.dev.yml up --build
 
 # バックグラウンドで起動
 docker-compose -f docker-compose.dev.yml up -d --build
+```
+
+#### Podmanを使用する場合
+
+```bash
+# ネットワークを作成
+podman network create album-network
+
+# PostgreSQLコンテナを起動
+podman run -d --name album-app-postgres-dev --network album-network \
+  -e POSTGRES_DB=albumapp -e POSTGRES_USER=albumuser -e POSTGRES_PASSWORD=albumpass \
+  -p 5432:5432 postgres:15
+
+# バックエンドをビルドして起動
+podman build -t album-app-backend-dev -f backend/Dockerfile.dev backend/
+podman run -d --name album-app-backend-dev --network album-network \
+  -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_URLS=http://+:5000 \
+  -e "ConnectionStrings__DefaultConnection=Host=album-app-postgres-dev;Database=albumapp;Username=albumuser;Password=albumpass" \
+  -p 5000:5000 -v ${PWD}/backend:/app -v ${PWD}/data/pict:/data/pict -v ${PWD}/data/thumb:/data/thumb \
+  album-app-backend-dev
+
+# フロントエンドをビルドして起動
+podman build -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/
+podman run -d --name album-app-frontend-dev --network album-network \
+  -p 4200:4200 album-app-frontend-dev
 ```
 
 ### アクセス
@@ -36,8 +63,21 @@ docker-compose -f docker-compose.dev.yml up -d --build
 
 ### 開発環境の停止
 
+#### Docker Composeを使用する場合
+
 ```bash
 docker-compose -f docker-compose.dev.yml down
+```
+
+#### Podmanを使用する場合
+
+```bash
+# コンテナを停止・削除
+podman stop album-app-frontend-dev album-app-backend-dev album-app-postgres-dev
+podman rm album-app-frontend-dev album-app-backend-dev album-app-postgres-dev
+
+# ネットワークを削除（必要に応じて）
+podman network rm album-network
 ```
 
 ## 本番環境デプロイ
