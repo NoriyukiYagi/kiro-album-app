@@ -57,6 +57,7 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IFileValidationService, FileValidationService>();
 builder.Services.AddScoped<IMetadataService, MetadataService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
+builder.Services.AddScoped<IThumbnailService, ThumbnailService>();
 
 // Configure FileStorage options
 builder.Services.Configure<AlbumApp.Services.FileStorageOptions>(
