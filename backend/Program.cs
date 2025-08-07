@@ -54,6 +54,11 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IFileValidationService, FileValidationService>();
+
+// Configure FileStorage options
+builder.Services.Configure<AlbumApp.Services.FileStorageOptions>(
+    builder.Configuration.GetSection("FileStorage"));
 
 // Add CORS
 builder.Services.AddCors(options =>
