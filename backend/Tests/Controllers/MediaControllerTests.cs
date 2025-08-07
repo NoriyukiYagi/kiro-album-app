@@ -18,6 +18,8 @@ public class MediaControllerTests : IDisposable
 {
     private readonly AlbumDbContext _context;
     private readonly Mock<IFileValidationService> _mockFileValidationService;
+    private readonly Mock<IMetadataService> _mockMetadataService;
+    private readonly Mock<IFileStorageService> _mockFileStorageService;
     private readonly Mock<ILogger<MediaController>> _mockLogger;
     private readonly MediaController _controller;
 
@@ -30,9 +32,16 @@ public class MediaControllerTests : IDisposable
         _context = new AlbumDbContext(options);
         
         _mockFileValidationService = new Mock<IFileValidationService>();
+        _mockMetadataService = new Mock<IMetadataService>();
+        _mockFileStorageService = new Mock<IFileStorageService>();
         _mockLogger = new Mock<ILogger<MediaController>>();
         
-        _controller = new MediaController(_context, _mockFileValidationService.Object, _mockLogger.Object);
+        _controller = new MediaController(
+            _context, 
+            _mockFileValidationService.Object, 
+            _mockMetadataService.Object,
+            _mockFileStorageService.Object,
+            _mockLogger.Object);
         
         // Setup user context
         var claims = new List<Claim>
@@ -72,6 +81,16 @@ public class MediaControllerTests : IDisposable
 
         _mockFileValidationService.Setup(s => s.ValidateFile(It.IsAny<IFormFile>()))
             .Returns(new FileUploadValidationResult { IsValid = true });
+
+        var testDate = DateTime.UtcNow.AddDays(-1);
+        _mockMetadataService.Setup(s => s.ExtractDateTakenAsync(It.IsAny<string>(), It.IsAny<string>()))
+            .ReturnsAsync(testDate);
+
+        _mockFileStorageService.Setup(s => s.SaveFileAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<DateTime?>()))
+            .ReturnsAsync("20240101/test.jpg");
+
+        _mockFileStorageService.Setup(s => s.GetFullPath(It.IsAny<string>()))
+            .Returns("/data/pict/20240101/test.jpg");
 
         // Act
         var result = await _controller.UploadFile(mockFile.Object);

@@ -15,15 +15,21 @@ public class MediaController : ControllerBase
 {
     private readonly AlbumDbContext _context;
     private readonly IFileValidationService _fileValidationService;
+    private readonly IMetadataService _metadataService;
+    private readonly IFileStorageService _fileStorageService;
     private readonly ILogger<MediaController> _logger;
     
     public MediaController(
         AlbumDbContext context,
         IFileValidationService fileValidationService,
+        IMetadataService metadataService,
+        IFileStorageService fileStorageService,
         ILogger<MediaController> logger)
     {
         _context = context;
         _fileValidationService = fileValidationService;
+        _metadataService = metadataService;
+        _fileStorageService = fileStorageService;
         _logger = logger;
     }
     
@@ -58,56 +64,72 @@ public class MediaController : ControllerBase
             var fileExtension = Path.GetExtension(file.FileName);
             var uniqueFileName = $"{Guid.NewGuid()}{fileExtension}";
             
-            // For now, we'll use upload date as taken date (metadata extraction will be implemented in task 6)
-            var takenAt = DateTime.UtcNow;
-            var dateFolder = takenAt.ToString("yyyyMMdd");
-            
-            // Create directory structure
-            var pictureDirectory = Path.Combine("/data/pict", dateFolder);
-            Directory.CreateDirectory(pictureDirectory);
-            
-            // Save file to disk
-            var filePath = Path.Combine(pictureDirectory, uniqueFileName);
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            // Save file to temporary location first for metadata extraction
+            var tempFilePath = Path.Combine(Path.GetTempPath(), uniqueFileName);
+            using (var stream = new FileStream(tempFilePath, FileMode.Create))
             {
                 await file.CopyToAsync(stream);
             }
             
-            // Create MediaFile entity
-            var mediaFile = new MediaFile
+            try
             {
-                FileName = uniqueFileName,
-                OriginalFileName = file.FileName,
-                FilePath = filePath,
-                ContentType = file.ContentType,
-                FileSize = file.Length,
-                TakenAt = takenAt,
-                UploadedAt = DateTime.UtcNow,
-                UploadedBy = userId,
-                ThumbnailPath = "" // Will be set in task 7 (thumbnail generation)
-            };
+                // Extract metadata to get the taken date
+                var dateTaken = await _metadataService.ExtractDateTakenAsync(tempFilePath, file.ContentType);
+                
+                // Use extracted date or fallback to upload date
+                var takenAt = dateTaken ?? DateTime.UtcNow;
+                
+                // Save file using FileStorageService with date-based organization
+                var relativePath = await _fileStorageService.SaveFileAsync(tempFilePath, uniqueFileName, takenAt);
+                var fullPath = _fileStorageService.GetFullPath(relativePath);
+                
+                _logger.LogInformation("File saved with metadata-based organization: {RelativePath}, TakenAt: {TakenAt}", 
+                    relativePath, takenAt);
             
-            // Save to database
-            _context.MediaFiles.Add(mediaFile);
-            await _context.SaveChangesAsync();
+                // Create MediaFile entity
+                var mediaFile = new MediaFile
+                {
+                    FileName = uniqueFileName,
+                    OriginalFileName = file.FileName,
+                    FilePath = relativePath, // Store relative path instead of full path
+                    ContentType = file.ContentType,
+                    FileSize = file.Length,
+                    TakenAt = takenAt,
+                    UploadedAt = DateTime.UtcNow,
+                    UploadedBy = userId,
+                    ThumbnailPath = "" // Will be set in task 7 (thumbnail generation)
+                };
             
-            _logger.LogInformation("File uploaded successfully: {FileName} (ID: {Id})", 
-                file.FileName, mediaFile.Id);
-            
-            // Return response
-            var response = new MediaUploadResponseDto
+                // Save to database
+                _context.MediaFiles.Add(mediaFile);
+                await _context.SaveChangesAsync();
+                
+                _logger.LogInformation("File uploaded successfully: {FileName} (ID: {Id})", 
+                    file.FileName, mediaFile.Id);
+                
+                // Return response
+                var response = new MediaUploadResponseDto
+                {
+                    Id = mediaFile.Id,
+                    FileName = mediaFile.FileName,
+                    OriginalFileName = mediaFile.OriginalFileName,
+                    ContentType = mediaFile.ContentType,
+                    FileSize = mediaFile.FileSize,
+                    TakenAt = mediaFile.TakenAt,
+                    UploadedAt = mediaFile.UploadedAt,
+                    Message = "ファイルが正常にアップロードされました"
+                };
+                
+                return Ok(response);
+            }
+            finally
             {
-                Id = mediaFile.Id,
-                FileName = mediaFile.FileName,
-                OriginalFileName = mediaFile.OriginalFileName,
-                ContentType = mediaFile.ContentType,
-                FileSize = mediaFile.FileSize,
-                TakenAt = mediaFile.TakenAt,
-                UploadedAt = mediaFile.UploadedAt,
-                Message = "ファイルが正常にアップロードされました"
-            };
-            
-            return Ok(response);
+                // Clean up temporary file
+                if (System.IO.File.Exists(tempFilePath))
+                {
+                    System.IO.File.Delete(tempFilePath);
+                }
+            }
         }
         catch (Exception ex)
         {
