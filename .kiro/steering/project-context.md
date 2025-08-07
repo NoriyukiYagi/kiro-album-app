@@ -63,9 +63,11 @@ album-app/
 
 ### テスト実行
 - Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test`
+- ローカル環境でのテスト実行はしないこと
 
 ### ビルド
 - Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build`
+- ローカル環境でのビルド実行はしないこと
 
 ### 管理者設定
 - 管理者ユーザーは `appsettings.json` の `AdminUsers` セクションで設定
