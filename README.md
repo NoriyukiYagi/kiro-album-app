@@ -41,7 +41,7 @@ podman run -d --name album-app-postgres-dev --network album-network \
   -p 5432:5432 postgres:15
 
 # バックエンドをビルドして起動
-podman build -t album-app-backend-dev -f backend/Dockerfile.dev backend/
+podman build --network=host -t album-app-backend-dev -f backend/Dockerfile.dev backend/
 podman run -d --name album-app-backend-dev --network album-network \
   -e ASPNETCORE_ENVIRONMENT=Development -e ASPNETCORE_URLS=http://+:5000 \
   -e "ConnectionStrings__DefaultConnection=Host=album-app-postgres-dev;Database=albumapp;Username=albumuser;Password=albumpass" \
@@ -49,7 +49,7 @@ podman run -d --name album-app-backend-dev --network album-network \
   album-app-backend-dev
 
 # フロントエンドをビルドして起動
-podman build -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/
+podman build --network=host -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/
 podman run -d --name album-app-frontend-dev --network album-network \
   -p 4200:4200 album-app-frontend-dev
 ```
