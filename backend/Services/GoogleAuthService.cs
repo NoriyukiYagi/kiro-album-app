@@ -14,12 +14,18 @@ public class GoogleAuthService : IGoogleAuthService
 {
     private readonly IConfiguration _configuration;
     private readonly AlbumDbContext _context;
+    private readonly IAdminService _adminService;
     private readonly ILogger<GoogleAuthService> _logger;
 
-    public GoogleAuthService(IConfiguration configuration, AlbumDbContext context, ILogger<GoogleAuthService> logger)
+    public GoogleAuthService(
+        IConfiguration configuration, 
+        AlbumDbContext context, 
+        IAdminService adminService,
+        ILogger<GoogleAuthService> logger)
     {
         _configuration = configuration;
         _context = context;
+        _adminService = adminService;
         _logger = logger;
     }
 
@@ -59,8 +65,7 @@ public class GoogleAuthService : IGoogleAuthService
             }
 
             // Check if this user is in the admin list
-            var adminUsers = _configuration.GetSection("AdminUsers").Get<string[]>() ?? Array.Empty<string>();
-            var isAdmin = adminUsers.Contains(payload.Email, StringComparer.OrdinalIgnoreCase);
+            var isAdmin = _adminService.IsAdminUser(payload.Email);
 
             // For non-admin users, check if they are already registered
             if (!isAdmin)

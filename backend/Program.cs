@@ -44,11 +44,16 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireRole("Admin"));
+});
 
 // Register custom services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IGoogleAuthService, GoogleAuthService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 // Add CORS
 builder.Services.AddCors(options =>
@@ -74,6 +79,7 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
+app.UseMiddleware<AlbumApp.Middleware.JwtAuthenticationMiddleware>();
 app.UseAuthorization();
 
 app.MapControllers();
