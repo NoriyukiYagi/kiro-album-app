@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using AlbumApp.Data;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +7,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add Entity Framework with PostgreSQL
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+    ?? "Host=localhost;Database=albumapp;Username=postgres;Password=postgres";
+
+builder.Services.AddDbContext<AlbumDbContext>(options =>
+    options.UseNpgsql(connectionString));
 
 // Add CORS
 builder.Services.AddCors(options =>
