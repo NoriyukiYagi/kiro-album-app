@@ -62,11 +62,9 @@ album-app/
 ## 開発時の注意事項
 
 ### テスト実行
-- バックエンドテスト: `dotnet test` または `./test-backend.ps1`
 - Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test`
 
 ### ビルド
-- バックエンドビルド: `dotnet build`
 - Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build`
 
 ### 管理者設定
