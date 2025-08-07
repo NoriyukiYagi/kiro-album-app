@@ -1,15 +1,15 @@
 @echo off
-REM Podmanコンテナを使用してバックエンドのビルドとテストを実行するバッチファイル
+REM Batch file to build and test backend using Podman containers
 
 setlocal enabledelayedexpansion
 
-REM 設定
+REM Configuration
 set CONFIGURATION=Debug
 set DOTNET_IMAGE=mcr.microsoft.com/dotnet/sdk:8.0
 set VOLUME_MOUNT=%CD%/backend:/src
 set WORK_DIR=/src
 
-REM 引数解析
+REM Argument parsing
 :parse_args
 if "%1"=="" goto start
 if /i "%1"=="--release" (
@@ -35,17 +35,17 @@ goto parse_args
 
 :show_help
 echo.
-echo バックエンドのビルドとテストを実行します
+echo Build and test backend
 echo.
-echo 使用方法: test-backend.cmd [オプション]
+echo Usage: test-backend.cmd [options]
 echo.
-echo オプション:
-echo   --release    リリース構成でビルド
-echo   --coverage   テストカバレッジレポートを生成
-echo   --clean      ビルド前にクリーンを実行
-echo   --help       このヘルプを表示
+echo Options:
+echo   --release    Build in Release configuration
+echo   --coverage   Generate test coverage report
+echo   --clean      Clean before build
+echo   --help       Show this help
 echo.
-echo 例:
+echo Examples:
 echo   test-backend.cmd
 echo   test-backend.cmd --release --coverage
 echo   test-backend.cmd --clean
@@ -54,80 +54,71 @@ goto end
 
 :start
 echo.
-echo === バックエンドのビルドとテスト ===
-echo 構成: %CONFIGURATION%
-if defined COVERAGE echo テストカバレッジ: 有効
-if defined CLEAN echo クリーン: 有効
+echo === Backend Build and Test ===
+echo Configuration: %CONFIGURATION%
+if defined COVERAGE echo Test Coverage: Enabled
+if defined CLEAN echo Clean: Enabled
 echo.
 
-REM Podmanの可用性チェック
+REM Check Podman availability
 podman --version >nul 2>&1
 if errorlevel 1 (
-    echo エラー: Podmanが見つかりません。Podman Desktopがインストールされていることを確認してください。
+    echo Error: Podman not found. Please ensure Podman Desktop is installed.
     goto error
 )
 
-REM バックエンドディレクトリの存在確認
+REM Check backend directory exists
 if not exist "backend" (
-    echo エラー: backendディレクトリが見つかりません。プロジェクトルートから実行してください。
+    echo Error: backend directory not found. Please run from project root.
     goto error
 )
 
-REM クリーン実行
+REM Clean execution
 if defined CLEAN (
-    echo クリーン実行中...
-    podman run --rm -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet clean -c %CONFIGURATION%
+    echo Cleaning...
+    podman run --rm --network=host -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet clean -c %CONFIGURATION%
     if errorlevel 1 (
-        echo クリーンに失敗しました。
+        echo Clean failed.
         goto error
     )
-    echo クリーン完了
+    echo Clean completed
 )
 
-REM パッケージ復元
-echo NuGetパッケージを復元中...
-podman run --rm -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet restore
+REM Package restore and build execution
+echo Restoring packages and building...
+podman run --rm --network=host -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet build -c %CONFIGURATION%
 if errorlevel 1 (
-    echo パッケージ復元に失敗しました。
+    echo Build failed.
     goto error
 )
-echo パッケージ復元完了
+echo Build completed
 
-REM ビルド実行
-echo ビルド実行中...
-podman run --rm -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet build -c %CONFIGURATION% --no-restore
-if errorlevel 1 (
-    echo ビルドに失敗しました。
-    goto error
-)
-echo ビルド完了
-
-REM テスト実行
-echo テスト実行中...
+REM Test execution
+echo Running tests...
 if defined COVERAGE (
-    podman run --rm -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet test -c %CONFIGURATION% --no-build --verbosity normal --collect:"XPlat Code Coverage"
+    podman run --rm --network=host -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet test -c %CONFIGURATION% --no-build --verbosity normal --collect:"XPlat Code Coverage"
 ) else (
-    podman run --rm -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet test -c %CONFIGURATION% --no-build --verbosity normal
+    podman run --rm --network=host -v "%VOLUME_MOUNT%" -w %WORK_DIR% %DOTNET_IMAGE% dotnet test -c %CONFIGURATION% --no-build --verbosity normal
 )
 
 if errorlevel 1 (
-    echo テストに失敗しました。
+    echo Tests failed.
     goto error
 )
 
-echo すべてのテストが成功しました！
+echo All tests passed!
 if defined COVERAGE (
-    echo テストカバレッジレポートが生成されました。
-    echo レポートの場所: backend\TestResults\
+    echo Test coverage report generated.
+    echo Report location: backend\TestResults\
 )
 
 echo.
-echo === 処理完了 ===
+echo === Process Completed ===
 goto end
 
 :error
 echo.
-echo === エラーで終了 ===
+echo === Exited with Error ===
 exit /b 1
 
 :end

@@ -172,37 +172,37 @@ album-app/
 
 ```bash
 # .NET 8.0 SDKコンテナを使用してビルド
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build
 
 # リリースビルド
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build -c Release
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build -c Release
 ```
 
 #### 単体テストの実行
 
 ```bash
 # 単体テストの実行
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test
 
 # 詳細な出力でテスト実行
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --verbosity normal
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --verbosity normal
 
 # テストカバレッジレポート付きでテスト実行
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --collect:"XPlat Code Coverage"
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --collect:"XPlat Code Coverage"
 ```
 
 #### パッケージの復元
 
 ```bash
 # NuGetパッケージの復元
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet restore
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet restore
 ```
 
 #### 開発用コンテナでの対話的作業
 
 ```bash
 # 開発用コンテナを起動して対話的に作業
-podman run -it --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 bash
+podman run -it --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 bash
 
 # コンテナ内で以下のコマンドが実行可能：
 # dotnet build
@@ -224,7 +224,7 @@ Write-Host "バックエンドのビルドとテストを開始します..." -Fo
 
 # ビルド実行
 Write-Host "ビルド中..." -ForegroundColor Yellow
-podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build -c $Configuration
+podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build -c $Configuration
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "ビルドに失敗しました。" -ForegroundColor Red
@@ -234,9 +234,9 @@ if ($LASTEXITCODE -ne 0) {
 # テスト実行
 Write-Host "テスト実行中..." -ForegroundColor Yellow
 if ($Coverage) {
-    podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --collect:"XPlat Code Coverage" --verbosity normal
+    podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --collect:"XPlat Code Coverage" --verbosity normal
 } else {
-    podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --verbosity normal
+    podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --verbosity normal
 }
 
 if ($LASTEXITCODE -eq 0) {
@@ -302,33 +302,7 @@ test-backend.cmd --help
 - **エラーハンドリング**: 各ステップでのエラー検出と適切な終了
 - **詳細ログ**: 実行状況の詳細な表示
 
-### ローカル環境でのビルドとテスト
 
-#### 前提条件
-
-- .NET 8.0 SDK がローカルにインストールされていること
-
-#### コマンド例
-
-```bash
-# バックエンドディレクトリに移動
-cd backend
-
-# パッケージの復元
-dotnet restore
-
-# ビルド
-dotnet build
-
-# テスト実行
-dotnet test
-
-# 開発サーバーの起動
-dotnet run
-
-# ホットリロード付きで開発サーバー起動
-dotnet watch run
-```
 
 ## トラブルシューティング
 

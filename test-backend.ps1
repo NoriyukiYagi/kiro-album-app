@@ -30,21 +30,21 @@
 #>
 
 param(
-    [Parameter(HelpMessage = "ビルド構成 (Debug/Release)")]
+    [Parameter(HelpMessage = "Build configuration (Debug/Release)")]
     [ValidateSet("Debug", "Release")]
     [string]$Configuration = "Debug",
     
-    [Parameter(HelpMessage = "テストカバレッジレポートを生成")]
+    [Parameter(HelpMessage = "Generate test coverage report")]
     [switch]$Coverage,
     
-    [Parameter(HelpMessage = "ビルド前にクリーンを実行")]
+    [Parameter(HelpMessage = "Clean before build")]
     [switch]$Clean
 )
 
-# エラー時に停止
+# Stop on error
 $ErrorActionPreference = "Stop"
 
-# 色付きメッセージ出力関数
+# Color message output function
 function Write-ColorMessage {
     param(
         [string]$Message,
@@ -53,84 +53,74 @@ function Write-ColorMessage {
     Write-Host $Message -ForegroundColor $Color
 }
 
-# Podmanが利用可能かチェック
+# Check if Podman is available
 function Test-PodmanAvailable {
     try {
         $null = podman --version
         return $true
     }
     catch {
-        Write-ColorMessage "エラー: Podmanが見つかりません。Podman Desktopがインストールされていることを確認してください。" "Red"
+        Write-ColorMessage "Error: Podman not found. Please ensure Podman Desktop is installed." "Red"
         return $false
     }
 }
 
-# メイン処理
+# Main process
 function Main {
-    Write-ColorMessage "=== バックエンドのビルドとテスト ===" "Cyan"
-    Write-ColorMessage "構成: $Configuration" "Yellow"
+    Write-ColorMessage "=== Backend Build and Test ===" "Cyan"
+    Write-ColorMessage "Configuration: $Configuration" "Yellow"
     
     if ($Coverage) {
-        Write-ColorMessage "テストカバレッジ: 有効" "Yellow"
+        Write-ColorMessage "Test Coverage: Enabled" "Yellow"
     }
     
     if ($Clean) {
-        Write-ColorMessage "クリーン: 有効" "Yellow"
+        Write-ColorMessage "Clean: Enabled" "Yellow"
     }
     
     Write-ColorMessage ""
 
-    # Podmanの可用性チェック
+    # Check Podman availability
     if (-not (Test-PodmanAvailable)) {
         exit 1
     }
 
-    # バックエンドディレクトリの存在確認
+    # Check backend directory exists
     if (-not (Test-Path "backend")) {
-        Write-ColorMessage "エラー: backendディレクトリが見つかりません。プロジェクトルートから実行してください。" "Red"
+        Write-ColorMessage "Error: backend directory not found. Please run from project root." "Red"
         exit 1
     }
 
-    # .NET SDKコンテナイメージ
+    # .NET SDK container image
     $dotnetImage = "mcr.microsoft.com/dotnet/sdk:8.0"
     $volumeMount = "${PWD}/backend:/src"
     $workDir = "/src"
 
     try {
-        # クリーン実行
+        # Clean execution
         if ($Clean) {
-            Write-ColorMessage "クリーン実行中..." "Yellow"
-            podman run --rm -v $volumeMount -w $workDir $dotnetImage dotnet clean -c $Configuration
+            Write-ColorMessage "Cleaning..." "Yellow"
+            podman run --rm --network=host -v $volumeMount -w $workDir $dotnetImage dotnet clean -c $Configuration
             
             if ($LASTEXITCODE -ne 0) {
-                Write-ColorMessage "クリーンに失敗しました。" "Red"
+                Write-ColorMessage "Clean failed." "Red"
                 exit 1
             }
-            Write-ColorMessage "クリーン完了" "Green"
+            Write-ColorMessage "Clean completed" "Green"
         }
 
-        # パッケージ復元
-        Write-ColorMessage "NuGetパッケージを復元中..." "Yellow"
-        podman run --rm -v $volumeMount -w $workDir $dotnetImage dotnet restore
+        # Package restore and build execution
+        Write-ColorMessage "Restoring packages and building..." "Yellow"
+        podman run --rm --network=host -v $volumeMount -w $workDir $dotnetImage dotnet build -c $Configuration
         
         if ($LASTEXITCODE -ne 0) {
-            Write-ColorMessage "パッケージ復元に失敗しました。" "Red"
+            Write-ColorMessage "Build failed." "Red"
             exit 1
         }
-        Write-ColorMessage "パッケージ復元完了" "Green"
+        Write-ColorMessage "Build completed" "Green"
 
-        # ビルド実行
-        Write-ColorMessage "ビルド実行中..." "Yellow"
-        podman run --rm -v $volumeMount -w $workDir $dotnetImage dotnet build -c $Configuration --no-restore
-        
-        if ($LASTEXITCODE -ne 0) {
-            Write-ColorMessage "ビルドに失敗しました。" "Red"
-            exit 1
-        }
-        Write-ColorMessage "ビルド完了" "Green"
-
-        # テスト実行
-        Write-ColorMessage "テスト実行中..." "Yellow"
+        # Test execution
+        Write-ColorMessage "Running tests..." "Yellow"
         
         $testArgs = @("test", "-c", $Configuration, "--no-build", "--verbosity", "normal")
         
@@ -138,29 +128,29 @@ function Main {
             $testArgs += @("--collect:XPlat Code Coverage")
         }
         
-        podman run --rm -v $volumeMount -w $workDir $dotnetImage dotnet @testArgs
+        podman run --rm --network=host -v $volumeMount -w $workDir $dotnetImage dotnet @testArgs
         
         if ($LASTEXITCODE -eq 0) {
-            Write-ColorMessage "すべてのテストが成功しました！" "Green"
+            Write-ColorMessage "All tests passed!" "Green"
             
             if ($Coverage) {
-                Write-ColorMessage "テストカバレッジレポートが生成されました。" "Green"
-                Write-ColorMessage "レポートの場所: backend/TestResults/" "Cyan"
+                Write-ColorMessage "Test coverage report generated." "Green"
+                Write-ColorMessage "Report location: backend/TestResults/" "Cyan"
             }
         } else {
-            Write-ColorMessage "テストに失敗しました。" "Red"
+            Write-ColorMessage "Tests failed." "Red"
             exit 1
         }
 
     }
     catch {
-        Write-ColorMessage "予期しないエラーが発生しました: $($_.Exception.Message)" "Red"
+        Write-ColorMessage "Unexpected error occurred: $($_.Exception.Message)" "Red"
         exit 1
     }
 
     Write-ColorMessage ""
-    Write-ColorMessage "=== 処理完了 ===" "Cyan"
+    Write-ColorMessage "=== Process Completed ===" "Cyan"
 }
 
-# スクリプト実行
+# Execute script
 Main
