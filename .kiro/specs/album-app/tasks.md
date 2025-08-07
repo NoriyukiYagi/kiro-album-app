@@ -26,6 +26,9 @@
 
 
 
+
+
+
   - ASP.NET Core プロジェクトを作成し、Entity Framework Core と PostgreSQL の設定を行う
   - User と MediaFile エンティティを定義し、DbContext を設定する
   - データベースマイグレーションを作成し、初期スキーマを生成する
