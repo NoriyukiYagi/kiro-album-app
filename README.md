@@ -159,6 +159,177 @@ album-app/
 - `./data/pict` → `/data/pict` (画像・動画ファイル)
 - `./data/thumb` → `/data/thumb` (サムネイル)
 
+## バックエンドのビルドとテスト
+
+### Podmanコンテナを使用したビルドとテスト
+
+#### 前提条件
+
+- Podman Desktop がインストールされていること
+- .NET 8.0 SDK コンテナイメージが利用可能であること
+
+#### ビルドの実行
+
+```bash
+# .NET 8.0 SDKコンテナを使用してビルド
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build
+
+# リリースビルド
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build -c Release
+```
+
+#### 単体テストの実行
+
+```bash
+# 単体テストの実行
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test
+
+# 詳細な出力でテスト実行
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --verbosity normal
+
+# テストカバレッジレポート付きでテスト実行
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --collect:"XPlat Code Coverage"
+```
+
+#### パッケージの復元
+
+```bash
+# NuGetパッケージの復元
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet restore
+```
+
+#### 開発用コンテナでの対話的作業
+
+```bash
+# 開発用コンテナを起動して対話的に作業
+podman run -it --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 bash
+
+# コンテナ内で以下のコマンドが実行可能：
+# dotnet build
+# dotnet test
+# dotnet run
+# dotnet watch run
+```
+
+#### PowerShellスクリプトでの自動化
+
+```powershell
+# test-backend.ps1 スクリプトの例
+param(
+    [string]$Configuration = "Debug",
+    [switch]$Coverage
+)
+
+Write-Host "バックエンドのビルドとテストを開始します..." -ForegroundColor Green
+
+# ビルド実行
+Write-Host "ビルド中..." -ForegroundColor Yellow
+podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build -c $Configuration
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "ビルドに失敗しました。" -ForegroundColor Red
+    exit 1
+}
+
+# テスト実行
+Write-Host "テスト実行中..." -ForegroundColor Yellow
+if ($Coverage) {
+    podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --collect:"XPlat Code Coverage" --verbosity normal
+} else {
+    podman run --rm -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test --verbosity normal
+}
+
+if ($LASTEXITCODE -eq 0) {
+    Write-Host "すべてのテストが成功しました。" -ForegroundColor Green
+} else {
+    Write-Host "テストに失敗しました。" -ForegroundColor Red
+    exit 1
+}
+```
+
+#### 使用例
+
+```bash
+# PowerShellスクリプトの実行
+./test-backend.ps1
+
+# カバレッジレポート付きでテスト実行
+./test-backend.ps1 -Coverage
+
+# リリース構成でビルドとテスト
+./test-backend.ps1 -Configuration Release
+
+# クリーン後にビルドとテスト
+./test-backend.ps1 -Clean
+
+# すべてのオプションを組み合わせ
+./test-backend.ps1 -Configuration Release -Coverage -Clean
+```
+
+#### バッチファイル版（Windows）
+
+```cmd
+REM バッチファイルの実行
+test-backend.cmd
+
+REM リリース構成でビルドとテスト
+test-backend.cmd --release
+
+REM カバレッジレポート付きでテスト実行
+test-backend.cmd --coverage
+
+REM クリーン後にビルドとテスト
+test-backend.cmd --clean
+
+REM すべてのオプションを組み合わせ
+test-backend.cmd --release --coverage --clean
+
+REM ヘルプ表示
+test-backend.cmd --help
+```
+
+#### 提供されるスクリプトファイル
+
+- `test-backend.ps1` - PowerShell版（クロスプラットフォーム対応）
+- `test-backend.cmd` - バッチファイル版（Windows専用）
+
+両方のスクリプトは以下の機能を提供します：
+
+- **自動ビルド**: .NET 8.0 SDKコンテナを使用した自動ビルド
+- **単体テスト実行**: 全テストの自動実行と結果表示
+- **テストカバレッジ**: コードカバレッジレポートの生成
+- **クリーンビルド**: 前回のビルド成果物をクリーンしてから実行
+- **エラーハンドリング**: 各ステップでのエラー検出と適切な終了
+- **詳細ログ**: 実行状況の詳細な表示
+
+### ローカル環境でのビルドとテスト
+
+#### 前提条件
+
+- .NET 8.0 SDK がローカルにインストールされていること
+
+#### コマンド例
+
+```bash
+# バックエンドディレクトリに移動
+cd backend
+
+# パッケージの復元
+dotnet restore
+
+# ビルド
+dotnet build
+
+# テスト実行
+dotnet test
+
+# 開発サーバーの起動
+dotnet run
+
+# ホットリロード付きで開発サーバー起動
+dotnet watch run
+```
+
 ## トラブルシューティング
 
 ### ポートが使用中の場合
