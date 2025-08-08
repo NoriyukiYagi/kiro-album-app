@@ -62,12 +62,17 @@ album-app/
 ## 開発時の注意事項
 
 ### テスト実行
-- Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test`
+- Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -v nuget-cache:/root/.nuget/packages -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet test`
 - ローカル環境でのテスト実行はしないこと
 
 ### ビルド
-- Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build`
+- Podmanコンテナ経由: `podman run --rm --network=host -v ${PWD}/backend:/src -v nuget-cache:/root/.nuget/packages -w /src mcr.microsoft.com/dotnet/sdk:8.0 dotnet build`
 - ローカル環境でのビルド実行はしないこと
+
+### NuGetキャッシュ
+- NuGetパッケージキャッシュ用の名前付きボリューム `nuget-cache` を使用
+- 初回実行時にボリュームが自動作成され、以降の実行で再利用される
+- キャッシュをクリアする場合: `podman volume rm nuget-cache`
 
 ### 管理者設定
 - 管理者ユーザーは `appsettings.json` の `AdminUsers` セクションで設定
