@@ -1,0 +1,163 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, of } from 'rxjs';
+import { map, catchError, tap } from 'rxjs/operators';
+import { User, AuthResponse, LoginRequest } from '../models/user.model';
+import { environment } from '../../environments/environment';
+
+declare const google: any;
+
+@Injectable({
+  providedIn: 'root'
+})
+export class AuthService {
+  private readonly API_URL = environment.apiUrl;
+  private readonly TOKEN_KEY = 'auth_token';
+  private readonly USER_KEY = 'current_user';
+
+  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  public currentUser$ = this.currentUserSubject.asObservable();
+
+  private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+  public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
+
+  constructor(private http: HttpClient) {
+    this.initializeAuth();
+  }
+
+  private initializeAuth(): void {
+    const token = this.getToken();
+    const user = this.getStoredUser();
+    
+    if (token && user) {
+      this.currentUserSubject.next(user);
+      this.isAuthenticatedSubject.next(true);
+    }
+  }
+
+  initializeGoogleAuth(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (typeof google !== 'undefined' && google.accounts) {
+        google.accounts.id.initialize({
+          client_id: environment.googleClientId,
+          callback: (response: any) => this.handleGoogleCallback(response),
+          auto_select: false,
+          cancel_on_tap_outside: true
+        });
+        resolve();
+      } else {
+        // Load Google Identity Services script
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.onload = () => {
+          google.accounts.id.initialize({
+            client_id: environment.googleClientId,
+            callback: (response: any) => this.handleGoogleCallback(response),
+            auto_select: false,
+            cancel_on_tap_outside: true
+          });
+          resolve();
+        };
+        script.onerror = () => reject(new Error('Failed to load Google Identity Services'));
+        document.head.appendChild(script);
+      }
+    });
+  }
+
+  private handleGoogleCallback(response: any): void {
+    if (response.credential) {
+      this.loginWithGoogle(response.credential).subscribe({
+        next: (authResponse) => {
+          console.log('Google login successful', authResponse);
+        },
+        error: (error) => {
+          console.error('Google login failed', error);
+        }
+      });
+    }
+  }
+
+  loginWithGoogle(googleToken: string): Observable<AuthResponse> {
+    const loginRequest: LoginRequest = { googleToken };
+    
+    return this.http.post<AuthResponse>(`${this.API_URL}/auth/google-login`, loginRequest)
+      .pipe(
+        tap(response => {
+          this.setToken(response.token);
+          this.setUser(response.user);
+          this.currentUserSubject.next(response.user);
+          this.isAuthenticatedSubject.next(true);
+        }),
+        catchError(error => {
+          console.error('Login failed:', error);
+          throw error;
+        })
+      );
+  }
+
+  logout(): Observable<any> {
+    return this.http.post(`${this.API_URL}/auth/logout`, {})
+      .pipe(
+        tap(() => {
+          this.clearAuthData();
+        }),
+        catchError(error => {
+          // Even if logout fails on server, clear local data
+          this.clearAuthData();
+          return of(null);
+        })
+      );
+  }
+
+  getUserInfo(): Observable<User> {
+    return this.http.get<User>(`${this.API_URL}/auth/user-info`)
+      .pipe(
+        tap(user => {
+          this.setUser(user);
+          this.currentUserSubject.next(user);
+        }),
+        catchError(error => {
+          console.error('Failed to get user info:', error);
+          this.clearAuthData();
+          throw error;
+        })
+      );
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(this.TOKEN_KEY);
+  }
+
+  private setToken(token: string): void {
+    localStorage.setItem(this.TOKEN_KEY, token);
+  }
+
+  private setUser(user: User): void {
+    localStorage.setItem(this.USER_KEY, JSON.stringify(user));
+  }
+
+  private getStoredUser(): User | null {
+    const userStr = localStorage.getItem(this.USER_KEY);
+    return userStr ? JSON.parse(userStr) : null;
+  }
+
+  private clearAuthData(): void {
+    localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.USER_KEY);
+    this.currentUserSubject.next(null);
+    this.isAuthenticatedSubject.next(false);
+  }
+
+  isAuthenticated(): boolean {
+    return !!this.getToken();
+  }
+
+  getCurrentUser(): User | null {
+    return this.currentUserSubject.value;
+  }
+
+  isAdmin(): boolean {
+    const user = this.getCurrentUser();
+    return user?.isAdmin || false;
+  }
+}
