@@ -17,6 +17,7 @@ public class MediaController : ControllerBase
     private readonly IFileValidationService _fileValidationService;
     private readonly IMetadataService _metadataService;
     private readonly IFileStorageService _fileStorageService;
+    private readonly IMediaRepository _mediaRepository;
     private readonly ILogger<MediaController> _logger;
     
     public MediaController(
@@ -24,12 +25,14 @@ public class MediaController : ControllerBase
         IFileValidationService fileValidationService,
         IMetadataService metadataService,
         IFileStorageService fileStorageService,
+        IMediaRepository mediaRepository,
         ILogger<MediaController> logger)
     {
         _context = context;
         _fileValidationService = fileValidationService;
         _metadataService = metadataService;
         _fileStorageService = fileStorageService;
+        _mediaRepository = mediaRepository;
         _logger = logger;
     }
     
@@ -100,9 +103,8 @@ public class MediaController : ControllerBase
                     ThumbnailPath = "" // Will be set in task 7 (thumbnail generation)
                 };
             
-                // Save to database
-                _context.MediaFiles.Add(mediaFile);
-                await _context.SaveChangesAsync();
+                // Save to database using repository
+                await _mediaRepository.AddMediaFileAsync(mediaFile);
                 
                 _logger.LogInformation("File uploaded successfully: {FileName} (ID: {Id})", 
                     file.FileName, mediaFile.Id);
@@ -144,30 +146,23 @@ public class MediaController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<ActionResult<IEnumerable<MediaFileDto>>> GetMediaFiles()
+    public async Task<ActionResult<PagedResult<MediaFileDto>>> GetMediaFiles(
+        [FromQuery] int page = 1, 
+        [FromQuery] int pageSize = 20)
     {
         try
         {
-            var mediaFiles = await Task.FromResult(_context.MediaFiles
-                .OrderByDescending(m => m.UploadedAt)
-                .Select(m => new MediaFileDto
-                {
-                    Id = m.Id,
-                    FileName = m.FileName,
-                    OriginalFileName = m.OriginalFileName,
-                    ContentType = m.ContentType,
-                    FileSize = m.FileSize,
-                    TakenAt = m.TakenAt,
-                    UploadedAt = m.UploadedAt,
-                    ThumbnailPath = m.ThumbnailPath
-                })
-                .ToList());
+            var result = await _mediaRepository.GetMediaFilesAsync(page, pageSize);
             
-            return Ok(mediaFiles);
+            _logger.LogInformation("Retrieved {Count} media files for page {Page} of {TotalPages}", 
+                result.Items.Count(), result.Page, result.TotalPages);
+            
+            return Ok(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving media files");
+            _logger.LogError(ex, "Error retrieving media files for page {Page}, pageSize {PageSize}", 
+                page, pageSize);
             return StatusCode(500, new { 
                 error = new { 
                     code = "RETRIEVAL_ERROR", 
@@ -182,20 +177,7 @@ public class MediaController : ControllerBase
     {
         try
         {
-            var mediaFile = await Task.FromResult(_context.MediaFiles
-                .Where(m => m.Id == id)
-                .Select(m => new MediaFileDto
-                {
-                    Id = m.Id,
-                    FileName = m.FileName,
-                    OriginalFileName = m.OriginalFileName,
-                    ContentType = m.ContentType,
-                    FileSize = m.FileSize,
-                    TakenAt = m.TakenAt,
-                    UploadedAt = m.UploadedAt,
-                    ThumbnailPath = m.ThumbnailPath
-                })
-                .FirstOrDefault());
+            var mediaFile = await _mediaRepository.GetMediaFileByIdAsync(id);
             
             if (mediaFile == null)
             {

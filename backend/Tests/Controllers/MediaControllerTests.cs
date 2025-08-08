@@ -20,6 +20,7 @@ public class MediaControllerTests : IDisposable
     private readonly Mock<IFileValidationService> _mockFileValidationService;
     private readonly Mock<IMetadataService> _mockMetadataService;
     private readonly Mock<IFileStorageService> _mockFileStorageService;
+    private readonly Mock<IMediaRepository> _mockMediaRepository;
     private readonly Mock<ILogger<MediaController>> _mockLogger;
     private readonly MediaController _controller;
 
@@ -34,6 +35,7 @@ public class MediaControllerTests : IDisposable
         _mockFileValidationService = new Mock<IFileValidationService>();
         _mockMetadataService = new Mock<IMetadataService>();
         _mockFileStorageService = new Mock<IFileStorageService>();
+        _mockMediaRepository = new Mock<IMediaRepository>();
         _mockLogger = new Mock<ILogger<MediaController>>();
         
         _controller = new MediaController(
@@ -41,6 +43,7 @@ public class MediaControllerTests : IDisposable
             _mockFileValidationService.Object, 
             _mockMetadataService.Object,
             _mockFileStorageService.Object,
+            _mockMediaRepository.Object,
             _mockLogger.Object);
         
         // Setup user context
@@ -179,89 +182,77 @@ public class MediaControllerTests : IDisposable
     }
 
     [Fact]
-    public async Task GetMediaFiles_ReturnsMediaFilesList()
+    public async Task GetMediaFiles_ReturnsPagedMediaFilesList()
     {
         // Arrange
-        var user = new User
+        var mediaFiles = new List<MediaFileDto>
         {
-            Id = 1,
-            GoogleId = "google1",
-            Email = "test@example.com",
-            Name = "Test User"
-        };
-        _context.Users.Add(user);
-
-        var mediaFile1 = new MediaFile
-        {
-            Id = 1,
-            FileName = "file1.jpg",
-            OriginalFileName = "original1.jpg",
-            FilePath = "/data/pict/20240101/file1.jpg",
-            ContentType = "image/jpeg",
-            FileSize = 1024,
-            TakenAt = DateTime.UtcNow.AddDays(-1),
-            UploadedAt = DateTime.UtcNow.AddDays(-1),
-            UploadedBy = 1
-        };
-
-        var mediaFile2 = new MediaFile
-        {
-            Id = 2,
-            FileName = "file2.png",
-            OriginalFileName = "original2.png",
-            FilePath = "/data/pict/20240102/file2.png",
-            ContentType = "image/png",
-            FileSize = 2048,
-            TakenAt = DateTime.UtcNow,
-            UploadedAt = DateTime.UtcNow,
-            UploadedBy = 1
+            new MediaFileDto
+            {
+                Id = 1,
+                FileName = "file1.jpg",
+                OriginalFileName = "original1.jpg",
+                ContentType = "image/jpeg",
+                FileSize = 1024,
+                TakenAt = DateTime.UtcNow.AddDays(-1),
+                UploadedAt = DateTime.UtcNow.AddDays(-1),
+                ThumbnailPath = "/data/thumb/20240101/file1.jpg"
+            },
+            new MediaFileDto
+            {
+                Id = 2,
+                FileName = "file2.png",
+                OriginalFileName = "original2.png",
+                ContentType = "image/png",
+                FileSize = 2048,
+                TakenAt = DateTime.UtcNow,
+                UploadedAt = DateTime.UtcNow,
+                ThumbnailPath = "/data/thumb/20240102/file2.png"
+            }
         };
 
-        _context.MediaFiles.AddRange(mediaFile1, mediaFile2);
-        await _context.SaveChangesAsync();
+        var pagedResult = new PagedResult<MediaFileDto>
+        {
+            Items = mediaFiles,
+            TotalCount = 2,
+            Page = 1,
+            PageSize = 20
+        };
+
+        _mockMediaRepository.Setup(r => r.GetMediaFilesAsync(1, 20))
+            .ReturnsAsync(pagedResult);
 
         // Act
-        var result = await _controller.GetMediaFiles();
+        var result = await _controller.GetMediaFiles(1, 20);
 
         // Assert
         var okResult = Assert.IsType<OkObjectResult>(result.Result);
-        var mediaFiles = Assert.IsAssignableFrom<IEnumerable<MediaFileDto>>(okResult.Value);
-        var mediaFilesList = mediaFiles.ToList();
+        var returnedResult = Assert.IsType<PagedResult<MediaFileDto>>(okResult.Value);
         
-        Assert.Equal(2, mediaFilesList.Count);
-        // Should be ordered by UploadedAt descending (newest first)
-        Assert.Equal("file2.png", mediaFilesList[0].FileName);
-        Assert.Equal("file1.jpg", mediaFilesList[1].FileName);
+        Assert.Equal(2, returnedResult.TotalCount);
+        Assert.Equal(1, returnedResult.Page);
+        Assert.Equal(20, returnedResult.PageSize);
+        Assert.Equal(2, returnedResult.Items.Count());
     }
 
     [Fact]
     public async Task GetMediaFile_ExistingId_ReturnsMediaFile()
     {
         // Arrange
-        var user = new User
-        {
-            Id = 1,
-            GoogleId = "google1",
-            Email = "test@example.com",
-            Name = "Test User"
-        };
-        _context.Users.Add(user);
-
-        var mediaFile = new MediaFile
+        var mediaFileDto = new MediaFileDto
         {
             Id = 1,
             FileName = "test.jpg",
             OriginalFileName = "original.jpg",
-            FilePath = "/data/pict/20240101/test.jpg",
             ContentType = "image/jpeg",
             FileSize = 1024,
             TakenAt = DateTime.UtcNow,
             UploadedAt = DateTime.UtcNow,
-            UploadedBy = 1
+            ThumbnailPath = "/data/thumb/20240101/test.jpg"
         };
 
-        _context.MediaFiles.Add(mediaFile);
-        await _context.SaveChangesAsync();
+        _mockMediaRepository.Setup(r => r.GetMediaFileByIdAsync(1))
+            .ReturnsAsync(mediaFileDto);
 
         // Act
         var result = await _controller.GetMediaFile(1);
@@ -276,6 +267,10 @@ public class MediaControllerTests : IDisposable
     [Fact]
     public async Task GetMediaFile_NonExistingId_ReturnsNotFound()
     {
+        // Arrange
+        _mockMediaRepository.Setup(r => r.GetMediaFileByIdAsync(999))
+            .ReturnsAsync((MediaFileDto?)null);
+
         // Act
         var result = await _controller.GetMediaFile(999);
 
