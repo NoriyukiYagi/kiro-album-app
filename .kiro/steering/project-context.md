@@ -75,10 +75,10 @@ album-app/
 - キャッシュをクリアする場合: `podman volume rm nuget-cache`
 
 ### フロントエンドのビルド・テスト実行
-- 開発環境用Dockerイメージを使用: `podman build -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/`
-- ビルド実行: `podman run --rm -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run build`
-- 単体テスト実行: `podman run --rm -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm test -- --watch=false --browsers=ChromeHeadless`
-- リント実行: `podman run --rm -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run lint`
+- 開発環境用Dockerイメージを使用: `podman build --network=host -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/`
+- ビルド実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run build`
+- 単体テスト実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm test -- --watch=false --browsers=ChromeHeadless`
+- リント実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run lint`
 - ローカル環境でのビルド・テスト実行はしないこと
 
 ### NPMキャッシュ
