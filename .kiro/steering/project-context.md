@@ -74,6 +74,18 @@ album-app/
 - 初回実行時にボリュームが自動作成され、以降の実行で再利用される
 - キャッシュをクリアする場合: `podman volume rm nuget-cache`
 
+### フロントエンドのビルド・テスト実行
+- 開発環境用Dockerイメージを使用: `podman build -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/`
+- ビルド実行: `podman run --rm -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run build`
+- 単体テスト実行: `podman run --rm -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm test -- --watch=false --browsers=ChromeHeadless`
+- リント実行: `podman run --rm -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run lint`
+- ローカル環境でのビルド・テスト実行はしないこと
+
+### NPMキャッシュ
+- NPMパッケージキャッシュ用の名前付きボリューム `npm-cache` を使用可能
+- キャッシュを使用する場合: `-v npm-cache:/root/.npm` オプションを追加
+- キャッシュをクリアする場合: `podman volume rm npm-cache`
+
 ### 管理者設定
 - 管理者ユーザーは `appsettings.json` の `AdminUsers` セクションで設定
 - Google OAuth設定が必要
