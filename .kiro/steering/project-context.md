@@ -76,10 +76,16 @@ album-app/
 
 ### フロントエンドのビルド・テスト実行
 - 開発環境用Dockerイメージを使用: `podman build --network=host -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/`
+- 依存関係のインストール: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm install`
 - ビルド実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run build`
-- 単体テスト実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm test -- --watch=false --browsers=ChromeHeadless`
+- 単体テスト実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run test:ci`
 - リント実行: `podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run lint`
 - ローカル環境でのビルド・テスト実行はしないこと
+
+### テスト環境の特徴
+- **Chrome Headless**: Google Chrome がDockerコンテナ内にインストールされ、ヘッドレスモードでテスト実行
+- **--no-sandbox**: Docker環境でのChrome実行に必要なフラグを自動適用
+- **CI対応**: 継続的インテグレーション環境での自動テスト実行に最適化
 
 ### NPMキャッシュ
 - NPMパッケージキャッシュ用の名前付きボリューム `npm-cache` を使用可能

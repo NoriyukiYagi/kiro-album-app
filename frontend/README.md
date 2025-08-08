@@ -59,6 +59,15 @@ Angular 17 frontend application for the Album App with Google OAuth authenticati
 
 ## Development
 
+### Docker環境のセットアップ
+```bash
+# 開発環境用Dockerイメージのビルド（Chrome付き）
+podman build --network=host -t album-app-frontend-dev -f frontend/Dockerfile.dev frontend/
+
+# 依存関係のインストール
+podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm install
+```
+
 ### Build
 ```bash
 podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run build
@@ -66,7 +75,11 @@ podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-fronten
 
 ### Test
 ```bash
-podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm test -- --watch=false --browsers=ChromeHeadless
+# CI環境での単体テスト実行（推奨）
+podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm run test:ci
+
+# または直接指定
+podman run --rm --network=host -v ${PWD}/frontend:/app -w /app album-app-frontend-dev npm test -- --watch=false --browsers=ChromeHeadlessNoSandbox
 ```
 
 ### Lint

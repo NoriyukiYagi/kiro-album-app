@@ -1,6 +1,24 @@
-FROM node:18-alpine
+FROM node:18-bullseye
 
 WORKDIR /app
+
+# Install system dependencies for Chrome
+RUN apt-get update && apt-get install -y \
+    wget \
+    gnupg \
+    ca-certificates \
+    procps \
+    libxss1 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Add Google Chrome's signing key and repository
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list
+
+# Install Google Chrome
+RUN apt-get update && apt-get install -y \
+    google-chrome-stable \
+    && rm -rf /var/lib/apt/lists/*
 
 # Install Angular CLI globally
 RUN npm install -g @angular/cli@17
@@ -11,6 +29,9 @@ RUN npm install
 
 # Copy source code
 COPY . ./
+
+# Set Chrome binary path for Karma
+ENV CHROME_BIN=/usr/bin/google-chrome
 
 # Expose port
 EXPOSE 4200
