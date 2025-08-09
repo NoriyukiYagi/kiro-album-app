@@ -44,7 +44,15 @@ Angular 17 frontend application for the Album App with Google OAuth authenticati
 ### Components
 - **AppComponent**: Main application shell with navigation
 - **LoadingComponent**: Global loading spinner overlay
+- **AlbumListComponent**: Photo/video album display
+- **LoginComponent**: Google OAuth login interface
 - **AdminUserManagementComponent**: Placeholder for admin functionality
+
+### Component Structure
+All components follow Angular best practices with external template and style files:
+- `*.component.ts` - Component logic
+- `*.component.html` - Template markup
+- `*.component.scss` - Component-specific styles
 
 ## Configuration
 

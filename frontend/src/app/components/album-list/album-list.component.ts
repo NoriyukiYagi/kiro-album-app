@@ -13,60 +13,8 @@ import { MatIconModule } from '@angular/material/icon';
     MatButtonModule,
     MatIconModule
   ],
-  template: `
-    <div class="album-container">
-      <h1>アルバム</h1>
-      
-      <div class="upload-section">
-        <button mat-raised-button color="primary">
-          <mat-icon>cloud_upload</mat-icon>
-          写真・動画をアップロード
-        </button>
-      </div>
-      
-      <div class="media-grid">
-        <mat-card class="media-item" *ngFor="let item of mockItems">
-          <img [src]="item.thumbnail" [alt]="item.name">
-          <mat-card-content>
-            <p>{{item.name}}</p>
-            <small>{{item.date}}</small>
-          </mat-card-content>
-        </mat-card>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .album-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-    
-    .upload-section {
-      margin: 20px 0;
-      text-align: center;
-    }
-    
-    .media-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 16px;
-    }
-    
-    .media-item {
-      cursor: pointer;
-      transition: transform 0.2s ease;
-    }
-    
-    .media-item:hover {
-      transform: scale(1.02);
-    }
-    
-    .media-item img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-    }
-  `]
+  templateUrl: './album-list.component.html',
+  styleUrls: ['./album-list.component.scss']
 })
 export class AlbumListComponent {
   mockItems = [

@@ -23,57 +23,8 @@ import { ErrorHandlerService } from './services/error-handler.service';
     MatDividerModule,
     LoadingComponent
   ],
-  template: `
-    <mat-toolbar color="primary">
-      <span>Album App</span>
-      <span class="spacer"></span>
-      
-      <div *ngIf="authService.isAuthenticated$ | async; else loginButton">
-        <button mat-button [matMenuTriggerFor]="userMenu">
-          <mat-icon>account_circle</mat-icon>
-          {{ (authService.currentUser$ | async)?.name || 'ユーザー' }}
-        </button>
-        <mat-menu #userMenu="matMenu">
-          <button mat-menu-item (click)="navigateToAlbum()">
-            <mat-icon>photo_library</mat-icon>
-            <span>アルバム</span>
-          </button>
-          <button mat-menu-item *ngIf="authService.isAdmin()" (click)="navigateToAdmin()">
-            <mat-icon>admin_panel_settings</mat-icon>
-            <span>ユーザー管理</span>
-          </button>
-          <mat-divider></mat-divider>
-          <button mat-menu-item (click)="logout()">
-            <mat-icon>logout</mat-icon>
-            <span>ログアウト</span>
-          </button>
-        </mat-menu>
-      </div>
-      
-      <ng-template #loginButton>
-        <button mat-button (click)="navigateToLogin()">
-          <mat-icon>login</mat-icon>
-          ログイン
-        </button>
-      </ng-template>
-    </mat-toolbar>
-    
-    <main>
-      <router-outlet></router-outlet>
-    </main>
-    
-    <app-loading></app-loading>
-  `,
-  styles: [`
-    .spacer {
-      flex: 1 1 auto;
-    }
-    
-    main {
-      padding: 20px;
-      min-height: calc(100vh - 64px);
-    }
-  `]
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.scss']
 })
 export class AppComponent implements OnInit {
   title = 'album-app';
