@@ -69,9 +69,11 @@ export class AuthService {
       this.loginWithGoogle(response.credential).subscribe({
         next: (authResponse) => {
           console.log('Google login successful', authResponse);
+          // Navigation will be handled by the component listening to isAuthenticated$
         },
         error: (error) => {
           console.error('Google login failed', error);
+          // Error will be handled by the component
         }
       });
     }

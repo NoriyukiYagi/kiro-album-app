@@ -6,13 +6,26 @@
     
     <mat-card-content>
       <p>Google アカウントでログインしてください</p>
+      
+      <div class="loading-container" *ngIf="isLoading">
+        <mat-spinner diameter="40"></mat-spinner>
+        <p>認証中...</p>
+      </div>
+      
+      <div class="google-signin-container" *ngIf="!isLoading">
+        <!-- Google Sign-In button will be rendered here -->
+        <div id="google-signin-button"></div>
+        
+        <!-- Fallback button -->
+        <button 
+          mat-raised-button 
+          color="primary" 
+          (click)="loginWithGoogle()"
+          class="fallback-button">
+          <mat-icon>account_circle</mat-icon>
+          Google でログイン
+        </button>
+      </div>
     </mat-card-content>
-    
-    <mat-card-actions>
-      <button mat-raised-button color="primary" (click)="loginWithGoogle()">
-        <mat-icon>account_circle</mat-icon>
-        Google でログイン
-      </button>
-    </mat-card-actions>
   </mat-card>
 </div>
