@@ -73,7 +73,9 @@ export class AuthService {
         },
         error: (error) => {
           console.error('Google login failed', error);
-          // Error will be handled by the component
+          // Clear any partial auth state
+          this.clearAuthData();
+          // Error will be handled by the component or interceptor
         }
       });
     }
@@ -121,6 +123,13 @@ export class AuthService {
           return of(null);
         })
       );
+  }
+
+  /**
+   * Local logout without server call - used by interceptor to avoid infinite loops
+   */
+  logoutLocal(): void {
+    this.clearAuthData();
   }
 
   getUserInfo(): Observable<UserInfo> {

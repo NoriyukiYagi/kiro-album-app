@@ -28,12 +28,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authReq).pipe(
     catchError((error: HttpErrorResponse) => {
-      return handleError(error, authService, router);
+      return handleError(error, authService, router, authReq.url);
     })
   );
 };
 
-function handleError(error: HttpErrorResponse, authService: AuthService, router: Router): Observable<never> {
+function handleError(error: HttpErrorResponse, authService: AuthService, router: Router, requestUrl: string): Observable<never> {
   let errorMessage = 'An unknown error occurred';
 
   if (error.error instanceof ErrorEvent) {
@@ -43,10 +43,17 @@ function handleError(error: HttpErrorResponse, authService: AuthService, router:
     // Server-side error
     switch (error.status) {
       case 401:
-        // Unauthorized - redirect to login
-        authService.logout().subscribe();
-        router.navigate(['/login']);
-        errorMessage = 'セッションが期限切れです。再度ログインしてください。';
+        // Unauthorized - avoid infinite loop by not calling logout API for logout requests
+        if (!requestUrl.includes('/auth/logout')) {
+          // Use local logout to avoid infinite loop
+          authService.logoutLocal();
+          router.navigate(['/login']);
+          errorMessage = 'セッションが期限切れです。再度ログインしてください。';
+        } else {
+          // For logout requests that fail with 401, just clear local data
+          authService.logoutLocal();
+          errorMessage = 'ログアウト処理中にエラーが発生しましたが、ローカルデータはクリアされました。';
+        }
         break;
       case 403:
         errorMessage = 'このリソースにアクセスする権限がありません。';
