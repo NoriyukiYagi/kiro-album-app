@@ -25,3 +25,10 @@ export interface AuthResponse {
 export interface LoginRequest {
   idToken: string;
 }
+
+export interface ApiResponse<T> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
+}

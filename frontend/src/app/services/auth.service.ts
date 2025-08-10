@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
-import { User, UserInfo, AuthResponse, LoginRequest } from '../models/user.model';
+import { User, UserInfo, AuthResponse, LoginRequest, ApiResponse } from '../models/user.model';
 import { environment } from '../../environments/environment';
 
 declare const google: any;
@@ -28,7 +28,7 @@ export class AuthService {
   private initializeAuth(): void {
     const token = this.getToken();
     const user = this.getStoredUser();
-    
+
     if (token && user) {
       this.currentUserSubject.next(user);
       this.isAuthenticatedSubject.next(true);
@@ -81,9 +81,15 @@ export class AuthService {
 
   loginWithGoogle(googleToken: string): Observable<AuthResponse> {
     const loginRequest: LoginRequest = { idToken: googleToken };
-    
-    return this.http.post<AuthResponse>(`${this.API_URL}/auth/google-login`, loginRequest)
+
+    return this.http.post<ApiResponse<AuthResponse>>(`${this.API_URL}/auth/google-login`, loginRequest)
       .pipe(
+        map(apiResponse => {
+          if (!apiResponse.success || !apiResponse.data) {
+            throw new Error(apiResponse.message || 'Login failed');
+          }
+          return apiResponse.data;
+        }),
         tap(response => {
           this.setToken(response.accessToken);
           this.setUser(response.user);
@@ -98,8 +104,14 @@ export class AuthService {
   }
 
   logout(): Observable<any> {
-    return this.http.post(`${this.API_URL}/auth/logout`, {})
+    return this.http.post<ApiResponse<any>>(`${this.API_URL}/auth/logout`, {})
       .pipe(
+        map(apiResponse => {
+          if (!apiResponse.success) {
+            console.warn('Logout warning:', apiResponse.message);
+          }
+          return apiResponse;
+        }),
         tap(() => {
           this.clearAuthData();
         }),
@@ -112,8 +124,14 @@ export class AuthService {
   }
 
   getUserInfo(): Observable<UserInfo> {
-    return this.http.get<UserInfo>(`${this.API_URL}/auth/user-info`)
+    return this.http.get<ApiResponse<UserInfo>>(`${this.API_URL}/auth/user-info`)
       .pipe(
+        map(apiResponse => {
+          if (!apiResponse.success || !apiResponse.data) {
+            throw new Error(apiResponse.message || 'Failed to get user info');
+          }
+          return apiResponse.data;
+        }),
         tap(user => {
           this.setUser(user);
           this.currentUserSubject.next(user);

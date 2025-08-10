@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
-import { User, UserInfo, AuthResponse } from '../models/user.model';
+import { User, UserInfo, AuthResponse, ApiResponse } from '../models/user.model';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -33,15 +33,21 @@ describe('AuthService', () => {
       isAdmin: false
     };
 
-    const mockResponse: AuthResponse = {
+    const mockAuthResponse: AuthResponse = {
       accessToken: 'jwt-token',
       tokenType: 'Bearer',
       expiresIn: 3600,
       user: mockUser
     };
 
+    const mockApiResponse: ApiResponse<AuthResponse> = {
+      success: true,
+      data: mockAuthResponse,
+      message: 'Login successful'
+    };
+
     service.loginWithGoogle('google-token').subscribe(response => {
-      expect(response).toEqual(mockResponse);
+      expect(response).toEqual(mockAuthResponse);
       expect(service.getToken()).toBe('jwt-token');
       expect(service.getCurrentUser()).toEqual(mockUser);
     });
@@ -49,13 +55,18 @@ describe('AuthService', () => {
     const req = httpMock.expectOne('http://localhost:5000/api/auth/google-login');
     expect(req.request.method).toBe('POST');
     expect(req.request.body).toEqual({ idToken: 'google-token' });
-    req.flush(mockResponse);
+    req.flush(mockApiResponse);
   });
 
   it('should logout', () => {
     // Set up initial auth state
     localStorage.setItem('auth_token', 'test-token');
     localStorage.setItem('current_user', JSON.stringify({ id: 1, name: 'Test' }));
+
+    const mockApiResponse: ApiResponse<any> = {
+      success: true,
+      message: 'Logout successful'
+    };
 
     service.logout().subscribe(() => {
       expect(service.getToken()).toBeNull();
@@ -64,7 +75,7 @@ describe('AuthService', () => {
 
     const req = httpMock.expectOne('http://localhost:5000/api/auth/logout');
     expect(req.request.method).toBe('POST');
-    req.flush({});
+    req.flush(mockApiResponse);
   });
 
   it('should check if user is authenticated', () => {
@@ -72,5 +83,23 @@ describe('AuthService', () => {
 
     localStorage.setItem('auth_token', 'test-token');
     expect(service.isAuthenticated()).toBeTrue();
+  });
+
+  it('should handle login failure', () => {
+    const mockApiResponse: ApiResponse<AuthResponse> = {
+      success: false,
+      error: 'UNAUTHORIZED',
+      message: 'Invalid Google token'
+    };
+
+    service.loginWithGoogle('invalid-token').subscribe({
+      next: () => fail('Should have failed'),
+      error: (error) => {
+        expect(error.message).toBe('Invalid Google token');
+      }
+    });
+
+    const req = httpMock.expectOne('http://localhost:5000/api/auth/google-login');
+    req.flush(mockApiResponse);
   });
 });
