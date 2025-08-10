@@ -1,18 +1,27 @@
 export interface User {
   id: number;
-  googleId: string;
+  googleId?: string;
   email: string;
   name: string;
   isAdmin: boolean;
-  createdAt: Date;
-  lastLoginAt: Date;
+  createdAt?: Date;
+  lastLoginAt?: Date;
+}
+
+export interface UserInfo {
+  id: number;
+  email: string;
+  name: string;
+  isAdmin: boolean;
 }
 
 export interface AuthResponse {
-  token: string;
-  user: User;
+  accessToken: string;
+  tokenType: string;
+  expiresIn: number;
+  user: UserInfo;
 }
 
 export interface LoginRequest {
-  googleToken: string;
+  idToken: string;
 }

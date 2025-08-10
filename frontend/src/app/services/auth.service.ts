@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, of } from 'rxjs';
 import { map, catchError, tap } from 'rxjs/operators';
-import { User, AuthResponse, LoginRequest } from '../models/user.model';
+import { User, UserInfo, AuthResponse, LoginRequest } from '../models/user.model';
 import { environment } from '../../environments/environment';
 
 declare const google: any;
@@ -15,7 +15,7 @@ export class AuthService {
   private readonly TOKEN_KEY = 'auth_token';
   private readonly USER_KEY = 'current_user';
 
-  private currentUserSubject = new BehaviorSubject<User | null>(null);
+  private currentUserSubject = new BehaviorSubject<UserInfo | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
@@ -80,12 +80,12 @@ export class AuthService {
   }
 
   loginWithGoogle(googleToken: string): Observable<AuthResponse> {
-    const loginRequest: LoginRequest = { googleToken };
+    const loginRequest: LoginRequest = { idToken: googleToken };
     
     return this.http.post<AuthResponse>(`${this.API_URL}/auth/google-login`, loginRequest)
       .pipe(
         tap(response => {
-          this.setToken(response.token);
+          this.setToken(response.accessToken);
           this.setUser(response.user);
           this.currentUserSubject.next(response.user);
           this.isAuthenticatedSubject.next(true);
@@ -111,8 +111,8 @@ export class AuthService {
       );
   }
 
-  getUserInfo(): Observable<User> {
-    return this.http.get<User>(`${this.API_URL}/auth/user-info`)
+  getUserInfo(): Observable<UserInfo> {
+    return this.http.get<UserInfo>(`${this.API_URL}/auth/user-info`)
       .pipe(
         tap(user => {
           this.setUser(user);
@@ -134,11 +134,11 @@ export class AuthService {
     localStorage.setItem(this.TOKEN_KEY, token);
   }
 
-  private setUser(user: User): void {
+  private setUser(user: UserInfo): void {
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
-  private getStoredUser(): User | null {
+  private getStoredUser(): UserInfo | null {
     const userStr = localStorage.getItem(this.USER_KEY);
     return userStr ? JSON.parse(userStr) : null;
   }
@@ -154,7 +154,7 @@ export class AuthService {
     return !!this.getToken();
   }
 
-  getCurrentUser(): User | null {
+  getCurrentUser(): UserInfo | null {
     return this.currentUserSubject.value;
   }
 

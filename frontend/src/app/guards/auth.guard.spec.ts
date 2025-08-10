@@ -3,7 +3,7 @@ import { Router, UrlTree } from '@angular/router';
 import { BehaviorSubject, of, throwError } from 'rxjs';
 import { AuthGuard } from './auth.guard';
 import { AuthService } from '../services/auth.service';
-import { User } from '../models/user.model';
+import { UserInfo } from '../models/user.model';
 
 describe('AuthGuard', () => {
   let guard: AuthGuard;
@@ -50,14 +50,11 @@ describe('AuthGuard', () => {
   });
 
   it('should allow access when user is authenticated and token is valid', (done) => {
-    const mockUser: User = {
+    const mockUser: UserInfo = {
       id: 1,
-      googleId: 'google123',
       email: 'test@example.com',
       name: 'Test User',
-      isAdmin: false,
-      createdAt: new Date(),
-      lastLoginAt: new Date()
+      isAdmin: false
     };
 
     mockAuthService.getToken.and.returnValue('valid-token');

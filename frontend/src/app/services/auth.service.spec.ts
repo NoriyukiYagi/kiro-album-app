@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { AuthService } from './auth.service';
-import { User, AuthResponse } from '../models/user.model';
+import { User, UserInfo, AuthResponse } from '../models/user.model';
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -26,18 +26,17 @@ describe('AuthService', () => {
   });
 
   it('should login with Google token', () => {
-    const mockUser: User = {
+    const mockUser: UserInfo = {
       id: 1,
-      googleId: 'google123',
       email: 'test@example.com',
       name: 'Test User',
-      isAdmin: false,
-      createdAt: new Date(),
-      lastLoginAt: new Date()
+      isAdmin: false
     };
 
     const mockResponse: AuthResponse = {
-      token: 'jwt-token',
+      accessToken: 'jwt-token',
+      tokenType: 'Bearer',
+      expiresIn: 3600,
       user: mockUser
     };
 
@@ -49,7 +48,7 @@ describe('AuthService', () => {
 
     const req = httpMock.expectOne('http://localhost:5000/api/auth/google-login');
     expect(req.request.method).toBe('POST');
-    expect(req.request.body).toEqual({ googleToken: 'google-token' });
+    expect(req.request.body).toEqual({ idToken: 'google-token' });
     req.flush(mockResponse);
   });
 
