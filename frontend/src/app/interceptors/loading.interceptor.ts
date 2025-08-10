@@ -1,28 +1,24 @@
-import { Injectable } from '@angular/core';
-import { HttpInterceptor, HttpRequest, HttpHandler, HttpEvent } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
 import { finalize } from 'rxjs/operators';
 import { LoadingService } from '../services/loading.service';
 
-@Injectable()
-export class LoadingInterceptor implements HttpInterceptor {
-  constructor(private loadingService: LoadingService) {}
+export const loadingInterceptor: HttpInterceptorFn = (req, next) => {
+  const loadingService = inject(LoadingService);
 
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Don't show loading for certain requests (like logout)
-    const skipLoading = req.url.includes('/auth/logout') || 
-                       req.headers.has('X-Skip-Loading');
-
-    if (!skipLoading) {
-      this.loadingService.show();
-    }
-
-    return next.handle(req).pipe(
-      finalize(() => {
-        if (!skipLoading) {
-          this.loadingService.hide();
-        }
-      })
-    );
+  // Don't show loading for certain requests (like logout)
+  const skipLoading = req.url.includes('/auth/logout') || 
+                     req.headers.has('X-Skip-Loading');
+  
+  if (!skipLoading) {
+    loadingService.show();
   }
-}
+
+  return next(req).pipe(
+    finalize(() => {
+      if (!skipLoading) {
+        loadingService.hide();
+      }
+    })
+  );
+};
