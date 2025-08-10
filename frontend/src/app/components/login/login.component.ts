@@ -29,12 +29,13 @@ declare const google: any;
 export class LoginComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
   isLoading = false;
+  hasError = false;
 
   constructor(
     private authService: AuthService,
     private router: Router,
     private snackBar: MatSnackBar
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     // Check if user is already authenticated
@@ -43,6 +44,20 @@ export class LoginComponent implements OnInit, OnDestroy {
       .subscribe(isAuthenticated => {
         if (isAuthenticated) {
           this.router.navigate(['/album']);
+        } else {
+          // Reset loading state when not authenticated
+          this.isLoading = false;
+        }
+      });
+
+    // Listen for login errors
+    this.authService.loginError$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(error => {
+        if (error) {
+          this.isLoading = false;
+          this.hasError = true;
+          this.showError(error);
         }
       });
 
@@ -61,38 +76,57 @@ export class LoginComponent implements OnInit, OnDestroy {
       this.renderGoogleButton();
     } catch (error) {
       console.error('Failed to initialize Google Auth:', error);
+      this.hasError = true;
       this.showError('Google認証の初期化に失敗しました');
     }
   }
 
   private renderGoogleButton(): void {
     if (typeof google !== 'undefined' && google.accounts) {
-      google.accounts.id.renderButton(
-        document.getElementById('google-signin-button'),
-        {
-          theme: 'outline',
-          size: 'large',
-          text: 'signin_with',
-          shape: 'rectangular',
-          logo_alignment: 'left'
+      // Wait for DOM to be ready
+      setTimeout(() => {
+        const buttonElement = document.getElementById('google-signin-button');
+        if (buttonElement) {
+          google.accounts.id.renderButton(buttonElement, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            shape: 'rectangular',
+            logo_alignment: 'left'
+          });
         }
-      );
+      }, 100);
     }
   }
 
   loginWithGoogle(): void {
     if (typeof google !== 'undefined' && google.accounts) {
+      // Clear previous errors and start loading
+      this.hasError = false;
+      this.authService.clearLoginError();
       this.isLoading = true;
+
       google.accounts.id.prompt((notification: any) => {
         if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
           // Fallback to manual sign-in
-          this.showError('Google認証がブロックされました。ポップアップブロッカーを無効にしてください。');
           this.isLoading = false;
+          this.hasError = true;
+          this.showError('Google認証がブロックされました。ポップアップブロッカーを無効にしてください。');
         }
       });
     } else {
+      this.hasError = true;
       this.showError('Google認証が利用できません');
     }
+  }
+
+  /**
+   * Retry login - clear error state and re-initialize
+   */
+  retryLogin(): void {
+    this.hasError = false;
+    this.authService.clearLoginError();
+    this.initializeGoogleAuth();
   }
 
   private showError(message: string): void {

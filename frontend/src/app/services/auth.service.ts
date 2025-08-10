@@ -21,6 +21,9 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private loginErrorSubject = new BehaviorSubject<string | null>(null);
+  public loginError$ = this.loginErrorSubject.asObservable();
+
   constructor(private http: HttpClient) {
     this.initializeAuth();
   }
@@ -69,13 +72,17 @@ export class AuthService {
       this.loginWithGoogle(response.credential).subscribe({
         next: (authResponse) => {
           console.log('Google login successful', authResponse);
+          // Clear any previous error
+          this.loginErrorSubject.next(null);
           // Navigation will be handled by the component listening to isAuthenticated$
         },
         error: (error) => {
           console.error('Google login failed', error);
           // Clear any partial auth state
           this.clearAuthData();
-          // Error will be handled by the component or interceptor
+          // Notify components about the error
+          const errorMessage = this.getErrorMessage(error);
+          this.loginErrorSubject.next(errorMessage);
         }
       });
     }
@@ -188,5 +195,29 @@ export class AuthService {
   isAdmin(): boolean {
     const user = this.getCurrentUser();
     return user?.isAdmin || false;
+  }
+
+  /**
+   * Clear login error
+   */
+  clearLoginError(): void {
+    this.loginErrorSubject.next(null);
+  }
+
+  /**
+   * Extract user-friendly error message from error object
+   */
+  private getErrorMessage(error: any): string {
+    if (error?.message) {
+      // Check for specific error messages from the API
+      if (error.message.includes('Invalid Google token') || error.message.includes('UNAUTHORIZED')) {
+        return 'Google認証に失敗しました。アカウントが許可されていないか、認証情報が無効です。';
+      }
+      if (error.message.includes('INTERNAL_ERROR')) {
+        return 'サーバーエラーが発生しました。しばらく時間をおいて再試行してください。';
+      }
+      return error.message;
+    }
+    return 'ログインに失敗しました。再度お試しください。';
   }
 }

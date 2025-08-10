@@ -5,14 +5,34 @@
     </mat-card-header>
     
     <mat-card-content>
-      <p>Google アカウントでログインしてください</p>
+      <p *ngIf="!hasError">Google アカウントでログインしてください</p>
       
+      <!-- Loading state -->
       <div class="loading-container" *ngIf="isLoading">
         <mat-spinner diameter="40"></mat-spinner>
         <p>認証中...</p>
       </div>
       
-      <div class="google-signin-container" *ngIf="!isLoading">
+      <!-- Error state -->
+      <div class="error-container" *ngIf="hasError && !isLoading">
+        <mat-icon color="warn" class="error-icon">error</mat-icon>
+        <p class="error-message">認証に失敗しました</p>
+        <p class="error-description">アカウントが許可されていないか、認証に問題が発生しました。</p>
+        
+        <div class="error-actions">
+          <button 
+            mat-raised-button 
+            color="primary" 
+            (click)="retryLogin()"
+            class="retry-button">
+            <mat-icon>refresh</mat-icon>
+            再試行
+          </button>
+        </div>
+      </div>
+      
+      <!-- Normal login state -->
+      <div class="google-signin-container" *ngIf="!isLoading && !hasError">
         <!-- Google Sign-In button will be rendered here -->
         <div id="google-signin-button"></div>
         
