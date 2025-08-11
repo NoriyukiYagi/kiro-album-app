@@ -113,7 +113,12 @@ describe('UploadComponent', () => {
 
   it('should handle file selection', () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const event = { target: { files: [mockFile] } } as any;
+    const mockFileList = {
+      0: mockFile,
+      length: 1,
+      item: (index: number) => index === 0 ? mockFile : null
+    } as FileList;
+    const event = { target: { files: mockFileList } } as any;
     mockMediaService.validateFiles.and.returnValue([]);
     mockMediaService.uploadFiles.and.returnValue(of([]));
 
@@ -125,12 +130,18 @@ describe('UploadComponent', () => {
 
   it('should show validation errors', () => {
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
-    const event = { target: { files: [mockFile] } } as any;
     const validationErrors = ['File too large'];
     mockMediaService.validateFiles.and.returnValue(validationErrors);
 
-    spyOn(component, 'handleFiles' as any).and.callThrough();
-    component.onFileSelected(event);
+    // Test the drop event instead, which directly calls handleFiles
+    const event = new DragEvent('drop');
+    Object.defineProperty(event, 'dataTransfer', {
+      value: { files: [mockFile] }
+    });
+    spyOn(event, 'preventDefault');
+    spyOn(event, 'stopPropagation');
+
+    component.onDrop(event);
 
     expect(mockSnackBar.open).toHaveBeenCalledWith(
       validationErrors.join('\n'),
@@ -145,12 +156,21 @@ describe('UploadComponent', () => {
     const validationErrors: string[] = [];
     mockMediaService.validateFiles.and.returnValue(validationErrors);
     
-    // Mock uploadFiles to throw an error
+    // Mock uploadFiles to throw an error synchronously
     const error = new Error('Upload failed');
-    mockMediaService.uploadFiles.and.throwError(error);
+    mockMediaService.uploadFiles.and.callFake(() => {
+      throw error;
+    });
 
-    // Call handleFiles directly to test error handling
-    (component as any).handleFiles([mockFile]);
+    // Test the drop event instead, which directly calls handleFiles
+    const event = new DragEvent('drop');
+    Object.defineProperty(event, 'dataTransfer', {
+      value: { files: [mockFile] }
+    });
+    spyOn(event, 'preventDefault');
+    spyOn(event, 'stopPropagation');
+
+    component.onDrop(event);
 
     expect(mockSnackBar.open).toHaveBeenCalledWith(
       'Upload failed',
