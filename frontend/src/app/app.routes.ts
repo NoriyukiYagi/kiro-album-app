@@ -18,6 +18,11 @@ export const routes: Routes = [
     canActivate: [AuthGuard]
   },
   {
+    path: 'upload',
+    loadComponent: () => import('./components/upload/upload.component').then(m => m.UploadComponent),
+    canActivate: [AuthGuard]
+  },
+  {
     path: 'admin',
     loadComponent: () => import('./components/admin-user-management/admin-user-management.component').then(m => m.AdminUserManagementComponent),
     canActivate: [AuthGuard, AdminGuard]

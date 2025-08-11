@@ -50,6 +50,10 @@ export class AppComponent implements OnInit {
     this.router.navigate(['/album']);
   }
 
+  navigateToUpload(): void {
+    this.router.navigate(['/upload']);
+  }
+
   navigateToAdmin(): void {
     this.router.navigate(['/admin']);
   }

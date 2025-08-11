@@ -12,6 +12,10 @@
         <mat-icon>photo_library</mat-icon>
         <span>アルバム</span>
       </button>
+      <button mat-menu-item (click)="navigateToUpload()">
+        <mat-icon>cloud_upload</mat-icon>
+        <span>アップロード</span>
+      </button>
       <button mat-menu-item *ngIf="authService.isAdmin()" (click)="navigateToAdmin()">
         <mat-icon>admin_panel_settings</mat-icon>
         <span>ユーザー管理</span>

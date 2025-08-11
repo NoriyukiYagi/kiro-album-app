@@ -1,0 +1,143 @@
+<div class="upload-container">
+  <!-- Upload Area -->
+  <mat-card class="upload-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>cloud_upload</mat-icon>
+        ファイルアップロード
+      </mat-card-title>
+      <mat-card-subtitle>
+        写真・動画をアップロードしてアルバムに追加
+      </mat-card-subtitle>
+    </mat-card-header>
+
+    <mat-card-content>
+      <!-- Drag & Drop Area -->
+      <div 
+        class="drop-zone"
+        [class.drag-over]="isDragOver"
+        [class.uploading]="isUploading"
+        (dragover)="onDragOver($event)"
+        (dragleave)="onDragLeave($event)"
+        (drop)="onDrop($event)"
+        (click)="openFileDialog()">
+        
+        <div class="drop-zone-content">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <h3>ファイルをドラッグ&ドロップ</h3>
+          <p>または</p>
+          <button mat-raised-button color="primary" [disabled]="isUploading">
+            <mat-icon>folder_open</mat-icon>
+            ファイルを選択
+          </button>
+        </div>
+
+        <!-- Hidden file input -->
+        <input 
+          #fileInput
+          type="file" 
+          multiple 
+          accept=".jpg,.jpeg,.png,.heic,.mp4,.mov"
+          (change)="onFileSelected($event)"
+          style="display: none;">
+      </div>
+
+      <!-- File Type Info -->
+      <div class="file-info">
+        <div class="info-section">
+          <h4>対応ファイル形式</h4>
+          <div class="file-types">
+            <mat-chip-set>
+              <mat-chip *ngFor="let ext of allowedExtensions">{{ ext.toUpperCase() }}</mat-chip>
+            </mat-chip-set>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h4>ファイルサイズ制限</h4>
+          <p>最大 {{ getMaxFileSize() }} まで</p>
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+
+  <!-- Upload Progress -->
+  <mat-card *ngIf="uploadProgresses.length > 0" class="progress-card">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon>upload_file</mat-icon>
+        アップロード状況
+      </mat-card-title>
+      <div class="header-actions">
+        <button 
+          mat-icon-button 
+          (click)="clearProgress()" 
+          [disabled]="hasUploadsInProgress()"
+          matTooltip="履歴をクリア">
+          <mat-icon>clear</mat-icon>
+        </button>
+      </div>
+    </mat-card-header>
+
+    <mat-card-content>
+      <mat-list>
+        <mat-list-item *ngFor="let progress of uploadProgresses; let last = last">
+          <div class="upload-item">
+            <!-- File Info -->
+            <div class="file-info-row">
+              <mat-icon [color]="getStatusColor(progress.status)">
+                {{ getStatusIcon(progress.status) }}
+              </mat-icon>
+              <div class="file-details">
+                <div class="file-name">{{ progress.file.name }}</div>
+                <div class="file-size">{{ getFileSize(progress.file.size) }}</div>
+              </div>
+              <div class="status-text" [ngClass]="progress.status">
+                <span *ngIf="progress.status === 'pending'">待機中</span>
+                <span *ngIf="progress.status === 'uploading'">アップロード中 ({{ progress.progress }}%)</span>
+                <span *ngIf="progress.status === 'completed'">完了</span>
+                <span *ngIf="progress.status === 'error'">エラー</span>
+              </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <mat-progress-bar 
+              *ngIf="progress.status === 'uploading' || progress.status === 'pending'"
+              mode="determinate" 
+              [value]="progress.progress"
+              color="primary">
+            </mat-progress-bar>
+
+            <!-- Error Message -->
+            <div *ngIf="progress.status === 'error' && progress.error" class="error-message">
+              <mat-icon color="warn">error</mat-icon>
+              <span>{{ progress.error }}</span>
+            </div>
+
+            <!-- Success Message -->
+            <div *ngIf="progress.status === 'completed' && progress.response" class="success-message">
+              <mat-icon color="primary">check_circle</mat-icon>
+              <span>{{ progress.response.originalFileName }} がアップロードされました</span>
+            </div>
+          </div>
+
+          <mat-divider *ngIf="!last"></mat-divider>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+
+    <!-- Summary -->
+    <mat-card-actions *ngIf="!hasUploadsInProgress()">
+      <div class="upload-summary">
+        <span *ngIf="hasCompletedUploads()" class="success-summary">
+          <mat-icon color="primary">check_circle</mat-icon>
+          {{ getCompletedCount() }}個のファイルがアップロードされました
+        </span>
+        <span *ngIf="hasFailedUploads()" class="error-summary">
+          <mat-icon color="warn">error</mat-icon>
+          {{ getFailedCount() }}個のファイルでエラーが発生しました
+        </span>
+      </div>
+    </mat-card-actions>
+  </mat-card>
+</div>
