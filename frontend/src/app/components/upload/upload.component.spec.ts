@@ -39,26 +39,29 @@ describe('UploadComponent', () => {
 
     fixture = TestBed.createComponent(UploadComponent);
     component = fixture.componentInstance;
-
-    // Don't call detectChanges() here to avoid early initialization
-    // fixture.detectChanges();
+    
+    // Mock the fileInput ViewChild
+    component.fileInput = {
+      nativeElement: {
+        click: jasmine.createSpy('click'),
+        value: ''
+      }
+    } as any;
+    
+    fixture.detectChanges();
   });
 
   it('should create', () => {
-    fixture.detectChanges();
     expect(component).toBeTruthy();
   });
 
   it('should initialize with empty upload progresses', () => {
-    fixture.detectChanges();
     expect(component.uploadProgresses).toEqual([]);
     expect(component.isUploading).toBeFalse();
     expect(component.isDragOver).toBeFalse();
   });
 
   it('should update upload progresses when service emits', () => {
-    fixture.detectChanges();
-
     const mockProgresses: UploadProgress[] = [
       {
         file: new File(['test'], 'test.jpg', { type: 'image/jpeg' }),
@@ -74,7 +77,6 @@ describe('UploadComponent', () => {
   });
 
   it('should handle drag over event', () => {
-    fixture.detectChanges();
 
     const event = new DragEvent('dragover');
     spyOn(event, 'preventDefault');
@@ -88,7 +90,6 @@ describe('UploadComponent', () => {
   });
 
   it('should handle drag leave event', () => {
-    fixture.detectChanges();
 
     component.isDragOver = true;
     const event = new DragEvent('dragleave');
@@ -103,7 +104,6 @@ describe('UploadComponent', () => {
   });
 
   it('should handle drop event with files', () => {
-    fixture.detectChanges();
 
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     const event = new DragEvent('drop');
@@ -124,7 +124,6 @@ describe('UploadComponent', () => {
   });
 
   it('should handle file selection', () => {
-    fixture.detectChanges();
 
     const mockFile = new File(['test'], 'test.jpg', { type: 'image/jpeg' });
     const mockFileList = {
@@ -143,7 +142,6 @@ describe('UploadComponent', () => {
   });
 
   it('should show validation errors', () => {
-    fixture.detectChanges();
 
     // Replace the component's snackBar with our mock
     (component as any).snackBar = mockSnackBar;
@@ -171,7 +169,6 @@ describe('UploadComponent', () => {
   });
 
   it('should handle upload errors', () => {
-    fixture.detectChanges();
 
     // Replace the component's snackBar with our mock
     (component as any).snackBar = mockSnackBar;
@@ -204,14 +201,12 @@ describe('UploadComponent', () => {
   });
 
   it('should clear progress', () => {
-    fixture.detectChanges();
 
     component.clearProgress();
     expect(mockMediaService.clearUploadProgress).toHaveBeenCalled();
   });
 
   it('should get correct status icon', () => {
-    fixture.detectChanges();
 
     expect(component.getStatusIcon('pending')).toBe('schedule');
     expect(component.getStatusIcon('uploading')).toBe('cloud_upload');
@@ -221,7 +216,6 @@ describe('UploadComponent', () => {
   });
 
   it('should get correct status color', () => {
-    fixture.detectChanges();
 
     expect(component.getStatusColor('pending')).toBe('accent');
     expect(component.getStatusColor('uploading')).toBe('primary');
@@ -231,7 +225,6 @@ describe('UploadComponent', () => {
   });
 
   it('should detect uploads in progress', () => {
-    fixture.detectChanges();
 
     component.uploadProgresses = [
       { file: new File([''], 'test.jpg'), progress: 50, status: 'uploading' }
@@ -245,7 +238,6 @@ describe('UploadComponent', () => {
   });
 
   it('should detect completed uploads', () => {
-    fixture.detectChanges();
 
     component.uploadProgresses = [
       { file: new File([''], 'test.jpg'), progress: 100, status: 'completed' }
@@ -259,7 +251,6 @@ describe('UploadComponent', () => {
   });
 
   it('should detect failed uploads', () => {
-    fixture.detectChanges();
 
     component.uploadProgresses = [
       { file: new File([''], 'test.jpg'), progress: 0, status: 'error', error: 'Failed' }
@@ -273,7 +264,6 @@ describe('UploadComponent', () => {
   });
 
   it('should get completed count', () => {
-    fixture.detectChanges();
 
     component.uploadProgresses = [
       { file: new File([''], 'test1.jpg'), progress: 100, status: 'completed' },
@@ -284,7 +274,6 @@ describe('UploadComponent', () => {
   });
 
   it('should get failed count', () => {
-    fixture.detectChanges();
 
     component.uploadProgresses = [
       { file: new File([''], 'test1.jpg'), progress: 100, status: 'completed' },
