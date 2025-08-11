@@ -42,6 +42,7 @@ describe('LoginComponent', () => {
 
     fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
+    // Don't call detectChanges() here to avoid early initialization
   });
 
   it('should create', () => {
