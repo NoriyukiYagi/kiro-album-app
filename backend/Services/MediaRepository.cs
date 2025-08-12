@@ -108,6 +108,25 @@ public class MediaRepository : IMediaRepository
     {
         try
         {
+            // Ensure DateTime values are in UTC for PostgreSQL compatibility
+            if (mediaFile.TakenAt.Kind == DateTimeKind.Unspecified)
+            {
+                mediaFile.TakenAt = DateTime.SpecifyKind(mediaFile.TakenAt, DateTimeKind.Utc);
+            }
+            else if (mediaFile.TakenAt.Kind == DateTimeKind.Local)
+            {
+                mediaFile.TakenAt = mediaFile.TakenAt.ToUniversalTime();
+            }
+
+            if (mediaFile.UploadedAt.Kind == DateTimeKind.Unspecified)
+            {
+                mediaFile.UploadedAt = DateTime.SpecifyKind(mediaFile.UploadedAt, DateTimeKind.Utc);
+            }
+            else if (mediaFile.UploadedAt.Kind == DateTimeKind.Local)
+            {
+                mediaFile.UploadedAt = mediaFile.UploadedAt.ToUniversalTime();
+            }
+
             _context.MediaFiles.Add(mediaFile);
             await _context.SaveChangesAsync();
             

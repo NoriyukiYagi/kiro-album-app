@@ -27,9 +27,23 @@ public class MediaFile
     
     public long FileSize { get; set; }
     
-    public DateTime TakenAt { get; set; }
+    private DateTime _takenAt;
+    public DateTime TakenAt 
+    { 
+        get => _takenAt;
+        set => _takenAt = value.Kind == DateTimeKind.Unspecified 
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc) 
+            : value.ToUniversalTime();
+    }
     
-    public DateTime UploadedAt { get; set; } = DateTime.UtcNow;
+    private DateTime _uploadedAt = DateTime.UtcNow;
+    public DateTime UploadedAt 
+    { 
+        get => _uploadedAt;
+        set => _uploadedAt = value.Kind == DateTimeKind.Unspecified 
+            ? DateTime.SpecifyKind(value, DateTimeKind.Utc) 
+            : value.ToUniversalTime();
+    }
     
     public int UploadedBy { get; set; }
     

@@ -22,8 +22,14 @@ public class AlbumDbContext : DbContext
             entity.HasKey(e => e.Id);
             entity.HasIndex(e => e.GoogleId).IsUnique();
             entity.HasIndex(e => e.Email).IsUnique();
-            entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
-            entity.Property(e => e.LastLoginAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            // Configure DateTime properties for PostgreSQL
+            entity.Property(e => e.CreatedAt)
+                  .HasColumnType("timestamp with time zone")
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
+            entity.Property(e => e.LastLoginAt)
+                  .HasColumnType("timestamp with time zone")
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
         });
         
         // MediaFile entity configuration
@@ -33,7 +39,13 @@ public class AlbumDbContext : DbContext
             entity.HasIndex(e => e.FileName);
             entity.HasIndex(e => e.TakenAt);
             entity.HasIndex(e => e.UploadedAt);
-            entity.Property(e => e.UploadedAt).HasDefaultValueSql("CURRENT_TIMESTAMP");
+            
+            // Configure DateTime properties for PostgreSQL
+            entity.Property(e => e.TakenAt)
+                  .HasColumnType("timestamp with time zone");
+            entity.Property(e => e.UploadedAt)
+                  .HasColumnType("timestamp with time zone")
+                  .HasDefaultValueSql("CURRENT_TIMESTAMP");
             
             // Foreign key relationship
             entity.HasOne(e => e.User)
