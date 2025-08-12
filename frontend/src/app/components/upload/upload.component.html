@@ -80,8 +80,8 @@
     </mat-card-header>
 
     <mat-card-content>
-      <mat-list>
-        <mat-list-item *ngFor="let progress of uploadProgresses; let last = last">
+      <div class="upload-list">
+        <div *ngFor="let progress of uploadProgresses; let last = last" class="upload-item-container">
           <div class="upload-item">
             <!-- File Info -->
             <div class="file-info-row">
@@ -122,8 +122,8 @@
           </div>
 
           <mat-divider *ngIf="!last"></mat-divider>
-        </mat-list-item>
-      </mat-list>
+        </div>
+      </div>
     </mat-card-content>
 
     <!-- Summary -->
