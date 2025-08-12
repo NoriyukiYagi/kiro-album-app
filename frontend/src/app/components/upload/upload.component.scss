@@ -5,13 +5,32 @@
   gap: 20px;
   display: flex;
   flex-direction: column;
+  min-height: 0; // Allow flex items to shrink
+  max-height: calc(100vh - 120px); // Account for toolbar height
+  overflow: hidden; // Prevent container overflow
+
+  @media (max-width: 768px) {
+    padding: 16px;
+    gap: 16px;
+    max-height: calc(100vh - 100px);
+  }
+
+  @media (max-width: 480px) {
+    padding: 12px;
+    gap: 12px;
+    max-height: calc(100vh - 80px);
+  }
 }
 
-.upload-card .mat-card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 1.5rem;
+.upload-card {
+  flex-shrink: 0; // Prevent upload card from shrinking
+  
+  .mat-card-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.5rem;
+  }
 }
 
 .drop-zone {
@@ -105,7 +124,18 @@
 }
 
 .progress-card {
+  // Set maximum height to prevent overflow
+  max-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // Prevent card itself from overflowing
+  flex: 1; // Allow card to grow and shrink as needed
+  min-height: 200px; // Ensure minimum height for usability
+
   .mat-card-header {
+    flex-shrink: 0; // Prevent header from shrinking
+    padding: 16px 16px 0 16px;
+
     .mat-card-title {
       display: flex;
       align-items: center;
@@ -119,17 +149,66 @@
     }
   }
 
+  .mat-card-content {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px 0 0 0 !important; // Remove default padding for better scroll behavior
+    display: flex;
+    flex-direction: column;
+  }
+
   .mat-list {
     padding: 0;
+    flex: 1;
+    overflow-y: auto; // Enable vertical scrolling
+    margin: 0;
+    
+    // Custom scrollbar styling
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f5f5f5;
+      border-radius: 3px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #bdbdbd;
+      border-radius: 3px;
+      
+      &:hover {
+        background: #9e9e9e;
+      }
+    }
+
+    // Firefox scrollbar styling
+    scrollbar-width: thin;
+    scrollbar-color: #bdbdbd #f5f5f5;
   }
 
   .mat-list-item {
-    height: auto;
-    padding: 16px 0;
+    height: auto !important;
+    min-height: 60px;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e0e0e0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    // Override Angular Material's default height
+    ::ng-deep .mat-list-item-content {
+      height: auto !important;
+      padding: 0 !important;
+    }
   }
 
   .upload-item {
     width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .file-info-row {
@@ -196,7 +275,10 @@
   .success-message { color: #4caf50; }
 
   .mat-card-actions {
-    padding: 16px 0 0 0;
+    flex-shrink: 0; // Prevent actions from shrinking
+    padding: 16px;
+    border-top: 1px solid #e0e0e0;
+    margin-top: 0;
   }
 
   .upload-summary {
