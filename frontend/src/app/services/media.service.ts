@@ -3,7 +3,6 @@ import { HttpClient, HttpEventType, HttpRequest } from '@angular/common/http';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { 
-  MediaFile, 
   MediaUploadResponse, 
   MediaListResponse, 
   UploadProgress,
@@ -31,7 +30,7 @@ export class MediaService {
    */
   getMediaList(pageIndex: number = 0, pageSize: number = 20): Observable<MediaListResponse> {
     const params = {
-      pageIndex: pageIndex.toString(),
+      page: (pageIndex + 1).toString(), // Convert 0-based to 1-based page numbering
       pageSize: pageSize.toString()
     };
 

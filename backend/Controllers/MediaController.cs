@@ -46,7 +46,12 @@ public class MediaController : ControllerBase
             if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
             {
                 _logger.LogWarning("Invalid user ID in token");
-                return Unauthorized(new { error = new { code = "INVALID_USER", message = "無効なユーザーです" } });
+                return Unauthorized(new ApiResponse<object>
+                {
+                    Success = false,
+                    Error = "INVALID_USER",
+                    Message = "無効なユーザーです"
+                });
             }
             
             // Validate file
@@ -55,11 +60,11 @@ public class MediaController : ControllerBase
             {
                 _logger.LogWarning("File validation failed: {ErrorCode} - {ErrorMessage}", 
                     validationResult.ErrorCode, validationResult.ErrorMessage);
-                return BadRequest(new { 
-                    error = new { 
-                        code = validationResult.ErrorCode, 
-                        message = validationResult.ErrorMessage 
-                    } 
+                return BadRequest(new ApiResponse<object>
+                {
+                    Success = false,
+                    Error = validationResult.ErrorCode,
+                    Message = validationResult.ErrorMessage
                 });
             }
             
@@ -122,7 +127,12 @@ public class MediaController : ControllerBase
                     Message = "ファイルが正常にアップロードされました"
                 };
                 
-                return Ok(response);
+                return Ok(new ApiResponse<MediaUploadResponseDto>
+                {
+                    Success = true,
+                    Data = response,
+                    Message = "ファイルが正常にアップロードされました"
+                });
             }
             finally
             {
@@ -136,11 +146,11 @@ public class MediaController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading file: {FileName}", file?.FileName);
-            return StatusCode(500, new { 
-                error = new { 
-                    code = "UPLOAD_ERROR", 
-                    message = "ファイルのアップロード中にエラーが発生しました" 
-                } 
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                Error = "UPLOAD_ERROR",
+                Message = "ファイルのアップロード中にエラーが発生しました"
             });
         }
     }

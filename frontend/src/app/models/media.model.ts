@@ -21,7 +21,9 @@ export interface MediaUploadResponse {
   originalFileName: string;
   fileSize: number;
   contentType: string;
+  takenAt: Date;
   uploadedAt: Date;
+  message: string;
 }
 
 export interface MediaListResponse {
