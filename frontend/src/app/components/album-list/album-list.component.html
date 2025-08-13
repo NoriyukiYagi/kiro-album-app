@@ -1,20 +1,106 @@
 <div class="album-container">
-  <h1>アルバム</h1>
-  
-  <div class="upload-section">
-    <button mat-raised-button color="primary">
-      <mat-icon>cloud_upload</mat-icon>
-      写真・動画をアップロード
+  <!-- Header Section -->
+  <div class="header-section">
+    <h1>アルバム</h1>
+    <div class="header-actions">
+      <button mat-icon-button (click)="onRefresh()" [disabled]="isLoading" title="更新">
+        <mat-icon>refresh</mat-icon>
+      </button>
+      <button mat-raised-button color="primary" (click)="onUploadClick()">
+        <mat-icon>cloud_upload</mat-icon>
+        写真・動画をアップロード
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>メディアファイルを読み込み中...</p>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-container" *ngIf="hasError && !isLoading">
+    <mat-icon color="warn">error</mat-icon>
+    <h3>読み込みエラー</h3>
+    <p>{{ errorMessage }}</p>
+    <button mat-raised-button color="primary" (click)="onRefresh()">
+      <mat-icon>refresh</mat-icon>
+      再試行
     </button>
   </div>
-  
-  <div class="media-grid">
-    <mat-card class="media-item" *ngFor="let item of mockItems">
-      <img [src]="item.thumbnail" [alt]="item.name">
-      <mat-card-content>
-        <p>{{item.name}}</p>
-        <small>{{item.date}}</small>
-      </mat-card-content>
-    </mat-card>
+
+  <!-- Empty State -->
+  <div class="empty-container" *ngIf="!isLoading && !hasError && mediaFiles.length === 0">
+    <mat-icon>photo_library</mat-icon>
+    <h3>メディアファイルがありません</h3>
+    <p>写真や動画をアップロードして、アルバムを作成しましょう。</p>
+    <button mat-raised-button color="primary" (click)="onUploadClick()">
+      <mat-icon>cloud_upload</mat-icon>
+      最初のファイルをアップロード
+    </button>
+  </div>
+
+  <!-- Media Grid -->
+  <div class="content-section" *ngIf="!isLoading && !hasError && mediaFiles.length > 0">
+    <!-- Media Count Info -->
+    <div class="media-info">
+      <p>{{ totalCount }}件のメディアファイル（{{ pageIndex * pageSize + 1 }}〜{{ Math.min((pageIndex + 1) * pageSize, totalCount) }}件を表示）</p>
+    </div>
+
+    <!-- Media Grid -->
+    <div class="media-grid">
+      <mat-card 
+        class="media-item" 
+        *ngFor="let mediaFile of mediaFiles; trackBy: trackByMediaId"
+        (click)="onThumbnailClick(mediaFile)"
+        [attr.aria-label]="'メディアファイル: ' + mediaFile.originalFileName">
+        
+        <!-- Thumbnail Image -->
+        <div class="thumbnail-container">
+          <img 
+            [src]="getThumbnailUrl(mediaFile)" 
+            [alt]="mediaFile.originalFileName"
+            loading="lazy"
+            (error)="onImageError($event, mediaFile)"
+            [style.display]="hasImageError(mediaFile) ? 'none' : 'block'">
+          
+          <!-- Fallback for failed images -->
+          <div class="image-fallback" *ngIf="hasImageError(mediaFile)">
+            <mat-icon>broken_image</mat-icon>
+            <span>画像を読み込めません</span>
+          </div>
+          
+          <!-- Video Indicator -->
+          <div class="media-type-indicator" *ngIf="isVideo(mediaFile)">
+            <mat-icon>play_circle_filled</mat-icon>
+          </div>
+        </div>
+
+        <!-- Media Info -->
+        <mat-card-content class="media-info-content">
+          <div class="media-title" [title]="mediaFile.originalFileName">
+            {{ mediaFile.originalFileName }}
+          </div>
+          <div class="media-details">
+            <small class="media-date">{{ formatDate(mediaFile.takenAt || mediaFile.uploadedAt) }}</small>
+            <small class="media-size">{{ formatFileSize(mediaFile.fileSize) }}</small>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-container">
+      <mat-paginator
+        [length]="totalCount"
+        [pageSize]="pageSize"
+        [pageIndex]="pageIndex"
+        [pageSizeOptions]="pageSizeOptions"
+        [showFirstLastButtons]="true"
+        (page)="onPageChange($event)"
+        aria-label="メディアファイルのページネーション">
+      </mat-paginator>
+    </div>
   </div>
 </div>
