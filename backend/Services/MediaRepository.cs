@@ -40,11 +40,13 @@ public class MediaRepository : IMediaRepository
                     Id = m.Id,
                     FileName = m.FileName,
                     OriginalFileName = m.OriginalFileName,
+                    FilePath = m.FilePath,
+                    ThumbnailPath = m.ThumbnailPath,
                     ContentType = m.ContentType,
                     FileSize = m.FileSize,
                     TakenAt = m.TakenAt,
                     UploadedAt = m.UploadedAt,
-                    ThumbnailPath = m.ThumbnailPath
+                    UploadedBy = m.UploadedBy
                 })
                 .ToListAsync();
 
@@ -78,11 +80,13 @@ public class MediaRepository : IMediaRepository
                     Id = m.Id,
                     FileName = m.FileName,
                     OriginalFileName = m.OriginalFileName,
+                    FilePath = m.FilePath,
+                    ThumbnailPath = m.ThumbnailPath,
                     ContentType = m.ContentType,
                     FileSize = m.FileSize,
                     TakenAt = m.TakenAt,
                     UploadedAt = m.UploadedAt,
-                    ThumbnailPath = m.ThumbnailPath
+                    UploadedBy = m.UploadedBy
                 })
                 .FirstOrDefaultAsync();
 

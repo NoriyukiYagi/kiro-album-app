@@ -156,7 +156,7 @@ public class MediaController : ControllerBase
     }
     
     [HttpGet]
-    public async Task<ActionResult<PagedResult<MediaFileDto>>> GetMediaFiles(
+    public async Task<ActionResult<ApiResponse<MediaListResponseDto>>> GetMediaFiles(
         [FromQuery] int page = 1, 
         [FromQuery] int pageSize = 20)
     {
@@ -164,20 +164,35 @@ public class MediaController : ControllerBase
         {
             var result = await _mediaRepository.GetMediaFilesAsync(page, pageSize);
             
+            // Convert PagedResult to MediaListResponseDto with 0-based pageIndex
+            var response = new MediaListResponseDto
+            {
+                Items = result.Items,
+                TotalCount = result.TotalCount,
+                PageIndex = result.Page - 1, // Convert 1-based to 0-based for frontend
+                PageSize = result.PageSize,
+                TotalPages = result.TotalPages
+            };
+            
             _logger.LogInformation("Retrieved {Count} media files for page {Page} of {TotalPages}", 
                 result.Items.Count(), result.Page, result.TotalPages);
             
-            return Ok(result);
+            return Ok(new ApiResponse<MediaListResponseDto>
+            {
+                Success = true,
+                Data = response,
+                Message = "メディアファイルの取得が完了しました"
+            });
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error retrieving media files for page {Page}, pageSize {PageSize}", 
                 page, pageSize);
-            return StatusCode(500, new { 
-                error = new { 
-                    code = "RETRIEVAL_ERROR", 
-                    message = "メディアファイルの取得中にエラーが発生しました" 
-                } 
+            return StatusCode(500, new ApiResponse<object>
+            {
+                Success = false,
+                Error = "RETRIEVAL_ERROR",
+                Message = "メディアファイルの取得中にエラーが発生しました"
             });
         }
     }
