@@ -20,6 +20,7 @@ public class MediaControllerTests : IDisposable
     private readonly Mock<IFileValidationService> _mockFileValidationService;
     private readonly Mock<IMetadataService> _mockMetadataService;
     private readonly Mock<IFileStorageService> _mockFileStorageService;
+    private readonly Mock<IThumbnailService> _mockThumbnailService;
     private readonly Mock<IMediaRepository> _mockMediaRepository;
     private readonly Mock<ILogger<MediaController>> _mockLogger;
     private readonly MediaController _controller;
@@ -35,6 +36,7 @@ public class MediaControllerTests : IDisposable
         _mockFileValidationService = new Mock<IFileValidationService>();
         _mockMetadataService = new Mock<IMetadataService>();
         _mockFileStorageService = new Mock<IFileStorageService>();
+        _mockThumbnailService = new Mock<IThumbnailService>();
         _mockMediaRepository = new Mock<IMediaRepository>();
         _mockLogger = new Mock<ILogger<MediaController>>();
         
@@ -43,6 +45,7 @@ public class MediaControllerTests : IDisposable
             _mockFileValidationService.Object, 
             _mockMetadataService.Object,
             _mockFileStorageService.Object,
+            _mockThumbnailService.Object,
             _mockMediaRepository.Object,
             _mockLogger.Object);
         
